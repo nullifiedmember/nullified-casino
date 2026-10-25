@@ -359,9 +359,28 @@
     pointer-events: none; font-family: "Press Start 2P", monospace; }
   .ucenter b { font-weight: 400; font-size: calc(var(--cell) * .17); color: #fff; text-shadow: 0 0 8px #000, 0 2px 0 #000; }
   .ucenter span { font-size: calc(var(--cell) * .06); color: #bdbdbd; text-shadow: 0 0 6px #000; }
-  .ures { position: absolute; left: -30%; right: -30%; bottom: -9%; text-align: center; font-family: var(--frak); font-size: calc(var(--cell) * .24);
-    color: #fff; text-shadow: 0 0 14px rgba(255,255,255,.4), 0 3px 0 #000; }
-  .ures.lose { color: #e05a5a; }
+  /* result banner: a game-style stamp over the dial, gone after a couple of seconds */
+  .ures { position: absolute; left: -12%; right: -12%; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; align-items: center; gap: 10px;
+    padding: 16px 0 14px; pointer-events: none; z-index: 2;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,.92) 18%, rgba(0,0,0,.92) 82%, transparent);
+    border-top: 2px solid var(--bc); border-bottom: 2px solid var(--bc); }
+  .ures.on { display: flex; animation: banner-in .35s cubic-bezier(.2,.9,.3,1.3); }
+  .ures.fade { animation: banner-out .5s forwards; }
+  .ures b { font-family: "Press Start 2P", monospace; font-weight: 400; font-size: calc(var(--cell) * .17); letter-spacing: .12em; }
+  .ures small { font-family: var(--frak); font-size: calc(var(--cell) * .17); line-height: 1; }
+  .ures.win { --bc: #bdbdbd; }
+  .ures.win b { color: #f4f4f4; text-shadow: 0 0 2px #fff, 0 0 18px rgba(255,255,255,.7), 0 0 40px rgba(255,255,255,.35), 4px 4px 0 #000; animation: holy 1.6s ease-in-out infinite alternate; }
+  .ures.win small { color: #e6e6e6; text-shadow: 0 0 10px rgba(255,255,255,.5), 0 3px 0 #000; }
+  .ures.lose { --bc: #6a1010; }
+  .ures.lose b { color: #c01c1c; text-shadow: 0 0 12px #8e1b1b, 0 0 30px rgba(142,27,27,.8), 4px 4px 0 #000; animation: embers .9s steps(1) infinite, quake .4s; }
+  .ures.lose small { color: #7a7a7a; text-shadow: 0 3px 0 #000; }
+  @keyframes banner-in { from { transform: translateY(-50%) scale(1.8); opacity: 0; } to { transform: translateY(-50%) scale(1); opacity: 1; } }
+  @keyframes banner-out { to { opacity: 0; transform: translateY(-50%) scale(.96); } }
+  @keyframes holy { from { filter: brightness(1); } to { filter: brightness(1.35); } }
+  @keyframes embers { 0% { opacity: 1; } 12% { opacity: .55; } 18% { opacity: 1; } 55% { opacity: .8; } 60% { opacity: .35; } 66% { opacity: 1; } }
+  @keyframes quake { 0%,100% { transform: translate(0); } 20% { transform: translate(-5px, 2px); } 40% { transform: translate(4px, -3px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
+  .dialwrap.burned canvas.px { filter: drop-shadow(0 0 30px rgba(0,0,0,.9)) grayscale(1) brightness(.55); transition: filter .4s; }
+  .dialwrap.blessed canvas.px { filter: drop-shadow(0 0 40px rgba(255,255,255,.35)); transition: filter .4s; }
   .betin { width: 100%; min-width: 0; text-align: center; background: #070707; border: 1px solid #3c3c3c; padding: 4px 2px; margin-top: 2px;
     font-family: "Press Start 2P", monospace !important; color: #fff; outline: none; }
   .betin:focus { border-color: #c94a4a; box-shadow: 0 0 8px rgba(201,74,74,.5); }
@@ -527,7 +546,7 @@
     <div class="plate"><div class="lbl">Выигрыш</div><div class="val" id="win">0</div></div>
     <div class="plate betctl">
       <button id="betDown" aria-label="Меньше">−</button>
-      <div><div class="lbl">Ставка</div><div class="val" id="bet">0</div></div>
+      <div><div class="lbl">Ставка</div><input class="val betin" id="bet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
       <button id="betUp" aria-label="Больше">+</button>
     </div>
     <button class="spin" id="spin">Крутить</button>
@@ -596,7 +615,7 @@
     <div class="plate"><div class="lbl">Баланс</div><div class="val" id="mBal">0</div></div>
     <div class="plate betctl">
       <button id="mBetDown" aria-label="Меньше">−</button>
-      <div><div class="lbl">Ставка</div><div class="val" id="mBet">0</div></div>
+      <div><div class="lbl">Ставка</div><input class="val betin" id="mBet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
       <button id="mBetUp" aria-label="Больше">+</button>
     </div>
     <div class="plate betctl">
@@ -626,7 +645,7 @@
     <div class="plate"><div class="lbl">Баланс</div><div class="val" id="bjBal">0</div></div>
     <div class="plate betctl">
       <button id="bjBetDown" aria-label="Меньше">−</button>
-      <div><div class="lbl">Ставка</div><div class="val" id="bjBet">0</div></div>
+      <div><div class="lbl">Ставка</div><input class="val betin" id="bjBet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
       <button id="bjBetUp" aria-label="Больше">+</button>
     </div>
     <button class="go" id="bjDeal">Раздать</button>
@@ -661,7 +680,7 @@
     <div class="plate"><div class="lbl">Баланс</div><div class="val" id="cBal">0</div></div>
     <div class="plate betctl">
       <button id="cBetDown" aria-label="Меньше">−</button>
-      <div><div class="lbl">Ставка</div><div class="val" id="cBet">0</div></div>
+      <div><div class="lbl">Ставка</div><input class="val betin" id="cBet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
       <button id="cBetUp" aria-label="Больше">+</button>
     </div>
     <div class="plate betctl">
@@ -789,7 +808,29 @@ const LINES = [
   [1,0,1,2,1],[0,1,1,1,0],[2,1,1,1,2],[0,1,0,1,0],[2,1,2,1,2],
   [1,1,0,1,1],[1,1,2,1,1],[0,0,2,0,0],[2,2,0,2,2],[0,2,2,2,0],
 ];
-const BETS = [20, 40, 100, 200, 400, 1000, 2000];
+const BETS = [20, 40, 100, 200, 400, 1000, 2000];     // bot bet sizes
+// Player bets are typed by hand in every game: whole coins, BET_MIN..BET_MAX; − / + step through BET_STEPS.
+const BET_MIN = 10, BET_MAX = 95000;
+const BET_STEPS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 95000];
+const clampBet = (v) => Math.min(BET_MAX, Math.max(BET_MIN, Math.round(v) || BET_MIN));
+function bindBet(inputId, downId, upId, obj, render) {
+  const el = document.getElementById(inputId);
+  el.addEventListener("input", () => {
+    const d = el.value.replace(/\D/g, "").slice(0, 6);
+    el.value = Number(d) > BET_MAX ? BET_MAX : d;
+    if (d) obj.bet = Math.min(BET_MAX, Number(d));
+    render();
+  });
+  el.addEventListener("blur", () => { obj.bet = clampBet(obj.bet); render(); });
+  el.addEventListener("keydown", (e) => { if (e.key === "Enter") el.blur(); });
+  document.getElementById(downId).onclick = () => { obj.bet = [...BET_STEPS].reverse().find((s) => s < obj.bet) ?? BET_MIN; render(); };
+  document.getElementById(upId).onclick = () => { obj.bet = BET_STEPS.find((s) => s > obj.bet) ?? BET_MAX; render(); };
+}
+function showBet(inputId, value, locked) {
+  const el = document.getElementById(inputId);
+  if (document.activeElement !== el) el.value = fmt(value);
+  el.disabled = locked;
+}
 
 function rnd() { return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296; }
 
@@ -1194,7 +1235,7 @@ function cellHtml(cell, extra = "") {
 }
 function symLabel(s) { return s === "W" ? "витраж" : s === "S" ? "колокол" : SYMBOLS[s].face; }
 
-let state = { bet: 1, grid: spinGrid(false), busy: false, auto: false, fsLeft: 0, fsWin: 0, sticky: null, speed: 0 };
+let state = { bet: 40, grid: spinGrid(false), busy: false, auto: false, fsLeft: 0, fsWin: 0, sticky: null, speed: 0 };
 const SPEEDS = [1, 0.5, 0.22];          // reel animation time multiplier: normal, fast, turbo
 const SPEED_LABELS = ["▶", "▶▶", "▶▶▶"];
 
@@ -1208,9 +1249,9 @@ function render(grid) {
 function fmt(n) { return Math.round(n).toLocaleString("ru-RU"); }
 function updateHud() {
   $("bal").textContent = fmt(Wallet.get());
-  $("bet").textContent = fmt(BETS[state.bet]);
-  $("betDown").disabled = state.busy || state.fsLeft > 0 || state.bet === 0;
-  $("betUp").disabled = state.busy || state.fsLeft > 0 || state.bet === BETS.length - 1;
+  showBet("bet", state.bet, state.busy || state.fsLeft > 0);
+  $("betDown").disabled = state.busy || state.fsLeft > 0 || state.bet <= BET_MIN;
+  $("betUp").disabled = state.busy || state.fsLeft > 0 || state.bet >= BET_MAX;
   $("spin").disabled = state.busy;
   $("auto").classList.toggle("on", state.auto);
   $("fsbar").classList.toggle("on", state.fsLeft > 0);
@@ -1256,7 +1297,7 @@ function showModal(id) { $(id).classList.add("on"); return new Promise((res) => 
 
 async function spin() {
   if (state.busy) return;
-  const bet = BETS[state.bet];
+  const bet = state.bet = clampBet(state.bet);
   const free = state.fsLeft > 0;
   if (!free && !Wallet.bet(bet)) { $("msg").textContent = "Не хватает монэток на ставку"; state.auto = false; updateHud(); return; }
   state.busy = true; $("msg").textContent = ""; $("win").textContent = "0";
@@ -1325,11 +1366,10 @@ addEventListener("pointerdown", startMusicOnce, { once: true });
 addEventListener("keydown", startMusicOnce, { once: true });
 $("spin").onclick = () => spin();
 $("auto").onclick = () => { state.auto = !state.auto; updateHud(); if (state.auto && !state.busy) spin(); };
-$("betDown").onclick = () => { state.bet = Math.max(0, state.bet - 1); updateHud(); };
-$("betUp").onclick = () => { state.bet = Math.min(BETS.length - 1, state.bet + 1); updateHud(); };
+bindBet("bet", "betDown", "betUp", state, updateHud);
 $("info").onclick = () => showModal("ptModal");
 $("speed").onclick = () => { state.speed = (state.speed + 1) % SPEEDS.length; $("speed").textContent = SPEED_LABELS[state.speed]; };
-document.addEventListener("keydown", (e) => { if (e.code === "Space" && view === "slots") { e.preventDefault(); spin(); } });
+document.addEventListener("keydown", (e) => { if (e.code === "Space" && view === "slots" && !e.target.closest("input")) { e.preventDefault(); spin(); } });
 
 /* ---------- screens ---------- */
 let view = "hub";
@@ -1383,7 +1423,7 @@ $("topUp").onclick =() => { Wallet.win(1000000); updateHud(); updateMines(); };
 // the fair multiplier for k safe picks is prod (25-i)/(25-N-i), minus a 3% house edge.
 const MINE_TILES = 25;
 const MINE_EDGE = 0.97;
-const mines = { bet: 1, count: 3, active: false, knives: new Set(), opened: new Set(), boom: -1, revealed: false };
+const mines = { bet: 40, count: 3, active: false, knives: new Set(), opened: new Set(), boom: -1, revealed: false };
 
 function minesMultiplier(picks, count) {
   if (picks === 0) return 1;
@@ -1417,17 +1457,17 @@ function drawTile(i) {
 function updateMines() {
   if (!$("mgrid").children.length) return;
   $("mBal").textContent = fmt(Wallet.get());
-  $("mBet").textContent = fmt(BETS[mines.bet]);
+  showBet("mBet", mines.bet, mines.active);
   $("mCount").textContent = mines.count;
   for (const id of ["mBetDown", "mBetUp", "mCountDown", "mCountUp", "backMines"]) $(id).disabled = mines.active;
-  $("mBetDown").disabled ||= mines.bet === 0;
-  $("mBetUp").disabled ||= mines.bet === BETS.length - 1;
+  $("mBetDown").disabled ||= mines.bet <= BET_MIN;
+  $("mBetUp").disabled ||= mines.bet >= BET_MAX;
   $("mCountDown").disabled ||= mines.count === 1;
   $("mCountUp").disabled ||= mines.count === 24;
   const picks = mines.opened.size;
   const go = $("mGo");
   if (mines.active) {
-    const cash = BETS[mines.bet] * minesMultiplier(picks, mines.count);
+    const cash = mines.bet * minesMultiplier(picks, mines.count);
     go.textContent = picks ? `Забрать ${fmt(cash)}` : "Выбери плиту";
     go.classList.toggle("cash", picks > 0);
     go.disabled = picks === 0;
@@ -1439,7 +1479,7 @@ function updateMines() {
   for (let i = 0; i < MINE_TILES; i++) drawTile(i);
 }
 function startMines() {
-  const bet = BETS[mines.bet];
+  const bet = mines.bet = clampBet(mines.bet);
   if (!Wallet.bet(bet)) { $("mNext").textContent = "Не хватает монэток на ставку"; return; }
   mines.knives = new Set();
   while (mines.knives.size < mines.count) mines.knives.add(Math.floor(rnd() * MINE_TILES));
@@ -1447,7 +1487,7 @@ function startMines() {
   updateMines(); updateHud();
 }
 function cashOut() {
-  const win = BETS[mines.bet] * minesMultiplier(mines.opened.size, mines.count);
+  const win = mines.bet * minesMultiplier(mines.opened.size, mines.count);
   Wallet.win(win);
   pushWin({ name: "Ты", you: true, game: "Mines", amount: win, mult: minesMultiplier(mines.opened.size, mines.count) });
   Sfx.play("coin");
@@ -1470,8 +1510,7 @@ function openTile(i) {
   updateMines();
 }
 $("mGo").onclick = () => (mines.active ? cashOut() : startMines());
-$("mBetDown").onclick = () => { mines.bet = Math.max(0, mines.bet - 1); updateMines(); };
-$("mBetUp").onclick = () => { mines.bet = Math.min(BETS.length - 1, mines.bet + 1); updateMines(); };
+bindBet("mBet", "mBetDown", "mBetUp", mines, updateMines);
 $("mCountDown").onclick = () => { mines.count = Math.max(1, mines.count - 1); mines.revealed = false; updateMines(); };
 $("mCountUp").onclick = () => { mines.count = Math.min(24, mines.count + 1); mines.revealed = false; updateMines(); };
 
@@ -1481,7 +1520,7 @@ $("mCountUp").onclick = () => { mines.count = Math.min(24, mines.count + 1); min
 const SUITS = [["♠", false], ["♥", true], ["♦", true], ["♣", false]];
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 const MAX_HANDS = 4;
-const bj = { bet: 1, shoe: [], hands: [], active: 0, dealer: [], phase: "idle", outcome: "", outcomeClass: "" };
+const bj = { bet: 40, shoe: [], hands: [], active: 0, dealer: [], phase: "idle", outcome: "", outcomeClass: "" };
 const newHand = (cards, stake, fromSplit = false) => ({ cards, stake, fromSplit, splitAces: false, done: false, result: "" });
 
 function newShoe() {
@@ -1534,7 +1573,8 @@ function renderBJ() {
   $("bjDealerLabel").textContent = bj.dealer.length ? `Дилер · ${dv}` : "Дилер";
   $("bjBal").textContent = fmt(Wallet.get());
   const staked = bj.hands.reduce((a, h) => a + h.stake, 0);
-  $("bjBet").textContent = fmt(staked && bj.phase !== "idle" ? staked : BETS[bj.bet]);
+  const inHand = bj.phase === "player" || bj.phase === "dealer";
+  showBet("bjBet", staked && inHand ? staked : bj.bet, inHand);
   const playing = bj.phase === "player" && !!activeHand() && !activeHand().done;
   const busy = bj.phase === "player" || bj.phase === "dealer";
   $("bjDeal").disabled = busy;
@@ -1542,8 +1582,8 @@ function renderBJ() {
   $("bjStand").disabled = !playing;
   $("bjDouble").disabled = !canDouble(activeHand());
   $("bjSplit").disabled = !canSplit(activeHand());
-  $("bjBetDown").disabled = busy || bj.bet === 0;
-  $("bjBetUp").disabled = busy || bj.bet === BETS.length - 1;
+  $("bjBetDown").disabled = busy || bj.bet <= BET_MIN;
+  $("bjBetUp").disabled = busy || bj.bet >= BET_MAX;
   $("backBj").disabled = busy;
   $("bjOut").textContent = bj.outcome;
   $("bjOut").className = "outcome " + bj.outcomeClass;
@@ -1604,7 +1644,7 @@ function nextHand() {
   renderBJ();
 }
 function dealBJ() {
-  const bet = BETS[bj.bet];
+  const bet = bj.bet = clampBet(bj.bet);
   if (!Wallet.bet(bet)) { bj.outcome = "Не хватает монэток на ставку"; bj.outcomeClass = "lose"; renderBJ(); return; }
   bj.outcome = ""; bj.outcomeClass = "";
   bj.hands = [newHand([draw(), draw()], bet)];
@@ -1656,8 +1696,7 @@ $("bjHit").onclick = hitBJ;
 $("bjStand").onclick = standBJ;
 $("bjDouble").onclick = doubleBJ;
 $("bjSplit").onclick = splitBJ;
-$("bjBetDown").onclick = () => { bj.bet = Math.max(0, bj.bet - 1); renderBJ(); };
-$("bjBetUp").onclick = () => { bj.bet = Math.min(BETS.length - 1, bj.bet + 1); renderBJ(); };
+bindBet("bjBet", "bjBetDown", "bjBetUp", bj, renderBJ);
 
 /* ---------- crash ---------- */
 // A bat climbs while the multiplier grows as e^(k·t) and drops at a random crash point.
@@ -1670,7 +1709,7 @@ const BAT = {
   down: ["...........", "....#.#....", "...#r#r#...", ".#########.", "###.....###", "##.......##", "#.........#"],
 };
 const CRASH_BET_SEC = 6, CRASH_PAUSE_SEC = 3, CRASH_MAX = 1000;
-const crash = { bet: 1, auto: 0, phase: "bet", roundId: "", sec: 0, point: 1, m: 1, el: 0, fallAt: 0, hist: [], players: [],
+const crash = { bet: 40, auto: 0, phase: "bet", roundId: "", sec: 0, point: 1, m: 1, el: 0, fallAt: 0, hist: [], players: [],
   my: null, queued: false };
 
 /* Shared rounds. Every browser derives the same round schedule from the wall clock: rounds run back
@@ -1844,13 +1883,13 @@ const myLive = () => crash.my && crash.my.roundId === crash.roundId && !crash.my
 function renderCrash() {
   const live = myLive(), inRound = crash.my && crash.my.roundId === crash.roundId;
   $("cBal").textContent = fmt(Wallet.get());
-  $("cBet").textContent = fmt(BETS[crash.bet]);
+  showBet("cBet", crash.bet, live || crash.queued);
   $("cAuto").textContent = CRASH_AUTO[crash.auto] ? "x" + CRASH_AUTO[crash.auto] : "Выкл";
   const lock = live || crash.queued;
   for (const id of ["cBetDown", "cBetUp", "cAutoDown", "cAutoUp"]) $(id).disabled = lock;
   $("backCrash").disabled = live && crash.phase === "fly";
-  $("cBetDown").disabled ||= crash.bet === 0;
-  $("cBetUp").disabled ||= crash.bet === BETS.length - 1;
+  $("cBetDown").disabled ||= crash.bet <= BET_MIN;
+  $("cBetUp").disabled ||= crash.bet >= BET_MAX;
   $("cAutoDown").disabled ||= crash.auto === 0;
   $("cAutoUp").disabled ||= crash.auto === CRASH_AUTO.length - 1;
   const go = $("cGo");
@@ -1858,7 +1897,7 @@ function renderCrash() {
   go.classList.toggle("cash", cashable);
   go.disabled = (crash.phase === "bet" && inRound) || (inRound && crash.my.cashed && crash.phase === "fly");
   go.textContent = cashable ? `Забрать ${fmt(crash.my.bet * crash.m)}`
-    : crash.phase === "bet" ? (inRound ? "Ставка принята" : `Поставить ${fmt(BETS[crash.bet])}`)
+    : crash.phase === "bet" ? (inRound ? "Ставка принята" : `Поставить ${fmt(clampBet(crash.bet))}`)
     : inRound && crash.my.cashed && crash.phase === "fly" ? "Забрано"
     : crash.queued ? "Отменить ставку" : "Ставка на следующий";
   const mult = $("crashMult");
@@ -1869,7 +1908,7 @@ function renderCrash() {
 }
 function crashMsg(text) { $("cNext").textContent = text; }
 function placeCrashBet() {
-  const bet = BETS[crash.bet];
+  const bet = crash.bet = clampBet(crash.bet);
   if (!Wallet.bet(bet)) { crashMsg("Не хватает монэток на ставку"); crash.queued = false; return; }
   crash.my = { roundId: crash.roundId, bet, cashed: 0 };
   crash.players = [{ name: "Ты", you: true, bet, cashed: 0 }, ...crash.players.filter((p) => !p.you)];
@@ -1975,8 +2014,7 @@ $("cGo").onclick = () => {
   crash.queued = !crash.queued;
   crashMsg(crash.queued ? "Ставка будет сделана в следующем раунде" : "Ставка отменена");
 };
-$("cBetDown").onclick = () => { crash.bet = Math.max(0, crash.bet - 1); renderCrash(); };
-$("cBetUp").onclick = () => { crash.bet = Math.min(BETS.length - 1, crash.bet + 1); renderCrash(); };
+bindBet("cBet", "cBetDown", "cBetUp", crash, renderCrash);
 $("cAutoDown").onclick = () => { crash.auto = Math.max(0, crash.auto - 1); renderCrash(); };
 $("cAutoUp").onclick = () => { crash.auto = Math.min(CRASH_AUTO.length - 1, crash.auto + 1); renderCrash(); };
 $("doorCrash").onclick = () => show("crash");
@@ -1993,7 +2031,7 @@ window.__simulateCrash = function (target = 2, rounds = 500000) {
 // Two wanderers walk through the dark castle and a vampire takes one of them: exactly 50/50.
 // The survivor takes the pot of both stakes minus a 3% fee, so a win returns 1.94x the stake.
 // Opponents are bots (no server yet), always tagged "бот".
-const DUEL_STAKES = [100, 500, 1000, 5000, 25000, 100000];
+const DUEL_STAKES = [100, 500, 1000, 5000, 25000, 95000];
 const DUEL_FEE = 0.03;
 const DUEL_WALK = 2.8, DUEL_BITE = 3.9, DUEL_END = 4.6;      // scene timeline, seconds
 const duel = { rooms: [], phase: "hall", stake: 0, opp: "", youDie: false, t0: 0, resolved: false, hist: [], raf: 0 };
@@ -2167,12 +2205,12 @@ function duelFrame(now) {
 // Stake a sum and aim for x times more. Win chance = 0.97 / multiplier, drawn as the red arc on the dial.
 // The blade stops at a uniformly random angle, so the arc's share of the circle is exactly the chance.
 const UPG_MULTS = [1.2, 1.5, 2, 3, 5, 10, 20, 50, 100];
-const UPG_EDGE = 0.97, UPG_MIN = 10, UPG_MAX = 95000;
-const UPG_STEPS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 95000];
+const UPG_EDGE = 0.97, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
 const UPG_SPIN_MS = 3400;
-const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, arcStart: 0, t0: 0, angle: 0, tick: 0, res: null, hist: [] };
+const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, t0: 0, angle: 180, tick: 0, res: null, hist: [], bannerTimer: 0 };
 const upgChance = () => UPG_EDGE / UPG_MULTS[upg.mult];
-const clampBet = (v) => Math.min(UPG_MAX, Math.max(UPG_MIN, Math.round(v) || UPG_MIN));
+// The win arc always sits in the same place: centred on the top of the dial.
+Object.defineProperty(upg, "arcStart", { get: () => -upgChance() * 180 });
 
 const UW = 160, UC = 80, toRad = (deg) => (deg - 90) * Math.PI / 180;
 function annulus(x, r1, r2, a0, a1) {
@@ -2216,11 +2254,11 @@ function drawUpg(now = performance.now()) {
 function renderUpg() {
   const busy = upg.phase === "spin", mult = UPG_MULTS[upg.mult];
   $("uBal").textContent = fmt(Wallet.get());
-  if (document.activeElement !== $("uBet")) $("uBet").value = fmt(upg.bet);
+  showBet("uBet", upg.bet, busy);
   $("uMult").textContent = "x" + mult;
   $("uChance").textContent = (upgChance() * 100).toFixed(upgChance() < 0.1 ? 2 : 1) + "%";
   $("uTarget").textContent = `${fmt(upg.bet)} → ${fmt(upg.bet * mult)}`;
-  for (const id of ["uBetDown", "uBetUp", "uMultDown", "uMultUp", "backUpg", "uGo", "uBet"]) $(id).disabled = busy;
+  for (const id of ["uBetDown", "uBetUp", "uMultDown", "uMultUp", "backUpg", "uGo"]) $(id).disabled = busy;
   $("uBetDown").disabled ||= upg.bet <= UPG_MIN;
   $("uBetUp").disabled ||= upg.bet >= UPG_MAX;
   $("uMultDown").disabled ||= upg.mult === 0;
@@ -2233,13 +2271,13 @@ function spinUpg() {
   upg.bet = clampBet(upg.bet);
   const bet = upg.bet, mult = UPG_MULTS[upg.mult];
   if (!Wallet.bet(bet)) { $("uNext").textContent = "Не хватает монэток на ставку"; return; }
-  upg.arcStart = rnd() * 360;                       // a fresh spot for the arc every round
   const land = rnd() * 360;
   const win = ((land - upg.arcStart + 360) % 360) < upgChance() * 360;
   upg.from = upg.angle % 360;
   upg.to = upg.from + 360 * 5 + ((land - upg.from + 360) % 360);
   Object.assign(upg, { phase: "spin", t0: performance.now(), tick: Math.floor(upg.from / 10), res: { win, bet, prize: bet * mult, mult } });
-  $("uRes").textContent = ""; $("uRes").className = "ures";
+  clearTimeout(upg.bannerTimer);
+  $("uRes").className = "ures"; $("uRes").parentElement.classList.remove("burned", "blessed");
   $("uNext").textContent = "Клинок вращается…";
   updateHud(); renderUpg();
   requestAnimationFrame(upgFrame);
@@ -2255,18 +2293,28 @@ function upgFrame(now) {
   drawUpg(now);
   if (upg.phase === "spin" || (upg.res && now - upg.res.at < 1000)) requestAnimationFrame(upgFrame);
 }
+function showUpgBanner(win, title, sub) {
+  const el = $("uRes");
+  el.innerHTML = `<b>${title.toUpperCase()}</b><small>${sub}</small>`;
+  el.className = "ures on " + (win ? "win" : "lose");
+  el.parentElement.classList.add(win ? "blessed" : "burned");
+  upg.bannerTimer = setTimeout(() => {
+    el.classList.add("fade");
+    upg.bannerTimer = setTimeout(() => { el.className = "ures"; el.parentElement.classList.remove("burned", "blessed"); }, 500);
+  }, 2600);
+}
 function finishUpg(now) {
   const r = upg.res;
   upg.phase = "done"; r.at = now; upg.angle %= 360;
   if (r.win) {
     Wallet.win(r.prize);
     pushWin({ name: "Ты", you: true, game: "Upgrader", amount: r.prize, mult: r.mult });
-    $("uRes").textContent = `Улучшено · +${fmt(r.prize)}`;
+    showUpgBanner(true, "Улучшено", `+${fmt(r.prize)}`);
     $("uNext").textContent = `Клинок попал в дугу. ${fmt(r.bet)} превратились в ${fmt(r.prize)}`;
     upg.hist.unshift(r.prize - r.bet);
     Sfx.play(r.mult >= 10 ? "big" : "win");
   } else {
-    $("uRes").textContent = "Сгорело"; $("uRes").classList.add("lose");
+    showUpgBanner(false, "Сгорело", `−${fmt(r.bet)}`);
     $("uNext").textContent = "Клинок прошёл мимо дуги";
     upg.hist.unshift(-r.bet);
     Sfx.play("lose");
@@ -2274,17 +2322,7 @@ function finishUpg(now) {
   upg.hist.length = Math.min(upg.hist.length, 10);
   updateHud(); renderUpg();
 }
-// bet: typed by hand (digits only, 10..95 000) or stepped with − / +
-$("uBet").addEventListener("input", () => {
-  const digits = $("uBet").value.replace(/\D/g, "").slice(0, 6);
-  $("uBet").value = digits;
-  if (digits) { upg.bet = Math.min(UPG_MAX, Number(digits)); if (Number(digits) > UPG_MAX) $("uBet").value = UPG_MAX; }
-  renderUpg();
-});
-$("uBet").addEventListener("blur", () => { upg.bet = clampBet(upg.bet); renderUpg(); });
-$("uBet").addEventListener("keydown", (e) => { if (e.key === "Enter") $("uBet").blur(); });
-$("uBetDown").onclick = () => { upg.bet = [...UPG_STEPS].reverse().find((s) => s < upg.bet) ?? UPG_MIN; renderUpg(); };
-$("uBetUp").onclick = () => { upg.bet = UPG_STEPS.find((s) => s > upg.bet) ?? UPG_MAX; renderUpg(); };
+bindBet("uBet", "uBetDown", "uBetUp", upg, renderUpg);
 $("uMultDown").onclick = () => { upg.mult = Math.max(0, upg.mult - 1); renderUpg(); };
 $("uMultUp").onclick = () => { upg.mult = Math.min(UPG_MULTS.length - 1, upg.mult + 1); renderUpg(); };
 $("uGo").onclick = spinUpg;
