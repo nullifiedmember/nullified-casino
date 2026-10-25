@@ -351,6 +351,69 @@
   .dhist span.w { border-color: #bdbdbd; color: #fff; }
   .duel .next { text-align: center; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .065); color: #bdbdbd; line-height: 1.8; min-height: 3.6em; }
 
+  /* upgrader */
+  .upg { position: relative; z-index: 1; align-items: center; gap: calc(var(--cell) * .3); }
+  .dialwrap { position: relative; width: calc(var(--cell) * 3.3); height: calc(var(--cell) * 3.3); }
+  .dialwrap canvas.px { width: 100%; height: 100%; filter: drop-shadow(0 0 30px rgba(0,0,0,.9)); }
+  .ucenter { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    pointer-events: none; font-family: "Press Start 2P", monospace; }
+  .ucenter b { font-weight: 400; font-size: calc(var(--cell) * .17); color: #fff; text-shadow: 0 0 8px #000, 0 2px 0 #000; }
+  .ucenter span { font-size: calc(var(--cell) * .06); color: #bdbdbd; text-shadow: 0 0 6px #000; }
+  .ures { position: absolute; left: -30%; right: -30%; bottom: -9%; text-align: center; font-family: var(--frak); font-size: calc(var(--cell) * .24);
+    color: #fff; text-shadow: 0 0 14px rgba(255,255,255,.4), 0 3px 0 #000; }
+  .ures.lose { color: #e05a5a; }
+  .betin { width: 100%; min-width: 0; text-align: center; background: #070707; border: 1px solid #3c3c3c; padding: 4px 2px; margin-top: 2px;
+    font-family: "Press Start 2P", monospace !important; color: #fff; outline: none; }
+  .betin:focus { border-color: #c94a4a; box-shadow: 0 0 8px rgba(201,74,74,.5); }
+  .betin:disabled { opacity: .5; }
+  .upg .side .go { height: calc(var(--cell) * .45); font-size: calc(var(--cell) * .1) !important; font-family: "Press Start 2P", monospace;
+    background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; color: #fff; }
+  .upg .next { text-align: center; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .065); color: #bdbdbd; line-height: 1.8; min-height: 3.6em; }
+
+  /* coffins */
+  .cof { position: relative; z-index: 1; align-items: center; gap: calc(var(--cell) * .22); }
+  .crypt { width: calc(var(--cell) * 5.2); height: calc(var(--cell) * 3.3); display: flex; flex-direction: column; gap: 10px; padding: 12px;
+    border: 2px solid var(--edge); background: radial-gradient(ellipse at 50% 20%, #262626, #0b0b0b 80%);
+    box-shadow: 0 0 0 6px #0a0a0a, 0 0 60px rgba(0,0,0,.85), inset 0 0 50px #000; }
+  .coffins { display: flex; justify-content: space-between; gap: 8px; height: 42%; }
+  .coffin { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; padding: 0; border: 0;
+    background: none; font-family: "Press Start 2P", monospace; }
+  .coffin .box { position: relative; width: 62%; flex: 1; transition: transform .2s, filter .2s;
+    clip-path: polygon(32% 0, 68% 0, 100% 20%, 82% 100%, 18% 100%, 0 20%);
+    background: linear-gradient(90deg, var(--w1), var(--w2) 50%, var(--w1)); box-shadow: inset 0 0 12px #000; }
+  .coffin .box::before { content: ""; position: absolute; inset: 7% 12% 7% 12%; clip-path: inherit; background: rgba(0,0,0,.25); }
+  .coffin .box::after { content: "✝"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-bottom: 20%;
+    font-family: Georgia, serif; font-size: calc(var(--cell) * .2); color: var(--cross); text-shadow: 0 0 6px #000; }
+  .coffin b { font-weight: 400; font-size: calc(var(--cell) * .05); color: #bdbdbd; text-align: center; line-height: 1.5; }
+  .coffin span { font-size: calc(var(--cell) * .065); color: #fff; }
+  .coffin:hover .box { transform: translateY(-3px); filter: brightness(1.2); }
+  .coffin.on .box { filter: brightness(1.3) drop-shadow(0 0 10px rgba(255,255,255,.35)); transform: translateY(-4px); }
+  .coffin.on b { color: #fff; }
+  .coffin.shake .box { animation: rattle .12s linear infinite; }
+  @keyframes rattle { 0%,100% { transform: translate(0, -4px) rotate(0); } 25% { transform: translate(-2px, -5px) rotate(-2deg); } 75% { transform: translate(2px, -3px) rotate(2deg); } }
+  .reel-win { position: relative; flex: 1; overflow: hidden; border: 1px solid #3c3c3c; background: #070707; box-shadow: inset 0 0 30px #000; }
+  .reel-win::before, .reel-win::after { content: ""; position: absolute; top: 0; bottom: 0; width: 18%; z-index: 2; pointer-events: none; }
+  .reel-win::before { left: 0; background: linear-gradient(90deg, #070707, transparent); }
+  .reel-win::after { right: 0; background: linear-gradient(-90deg, #070707, transparent); }
+  .marker { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; z-index: 3; background: #c01c1c; box-shadow: 0 0 10px #c01c1c; }
+  .lstrip { position: absolute; left: 0; top: 8%; bottom: 8%; display: flex; gap: 6px; will-change: transform; }
+  .loot { flex: none; width: var(--lw); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: linear-gradient(#1c1c1c, #0c0c0c); border: 2px solid var(--rc); border-bottom-width: 5px; font-family: "Press Start 2P", monospace; }
+  .loot img { width: 54%; image-rendering: pixelated; }
+  .loot i { font-style: normal; font-size: calc(var(--cell) * .042); color: #9a9a9a; text-align: center; line-height: 1.4; padding: 0 3px; }
+  .loot b { font-weight: 400; font-size: calc(var(--cell) * .05); color: #fff; }
+  .loot.won { box-shadow: 0 0 24px var(--rc); }
+  .cofres { position: absolute; inset: 0; z-index: 4; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 8px;
+    background: rgba(0,0,0,.72); font-family: var(--frak); color: #fff; font-size: calc(var(--cell) * .22); text-shadow: 0 0 14px rgba(255,255,255,.4); }
+  .cofres.on { display: flex; animation: fadein .3s; }
+  .cofres small { font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .06); color: #bdbdbd; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .odds { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .04); }
+  .odds span { padding: 3px 4px; border: 1px solid var(--rc); color: #bdbdbd; }
+  .cof .side .go { height: calc(var(--cell) * .45); font-size: calc(var(--cell) * .095) !important; font-family: "Press Start 2P", monospace;
+    background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; color: #fff; }
+  .cof .next { text-align: center; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .065); color: #bdbdbd; line-height: 1.8; min-height: 3.6em; }
+
   @media (max-aspect-ratio: 5/4) {
     :root { --cell: min(13.5vh, 18vw, 150px); }
     .stage { flex-direction: column; gap: calc(var(--cell) * .12); }
@@ -358,7 +421,7 @@
     .side .title { grid-column: 1 / -1; order: -1; }
     .side .spin { grid-column: 1 / -1; }
     .side .row, .side .msg { grid-column: 1 / -1; }
-    .crash, .duel { flex-direction: column; gap: calc(var(--cell) * .12); }
+    .crash, .duel, .upg, .cof { flex-direction: column; gap: calc(var(--cell) * .12); }
     .cplay { flex-direction: column; }
     .sky { width: calc(var(--cell) * 5.2); height: calc(var(--cell) * 2.9); }
     .players { width: auto; height: calc(var(--cell) * 1.3); }
@@ -508,6 +571,16 @@
       <h3>Duel</h3>
       <p>Один на один, 50 на 50</p>
     </button>
+    <button class="door" id="doorUpg">
+      <img id="doorUpgImg" alt="">
+      <h3>Upgrader</h3>
+      <p>Улучши ставку в x раз</p>
+    </button>
+    <button class="door" id="doorCof">
+      <img id="doorCofImg" alt="">
+      <h3>Coffins</h3>
+      <p>Открой гроб, забери добро</p>
+    </button>
   </div>
   <button class="arrow" id="doorsNext" aria-label="Следующие игры">&gt;</button>
   </div>
@@ -621,6 +694,49 @@
     <div class="next" id="dNext">Выбери зал. Двое идут через замок, вампир забирает одного. Выживший уносит банк</div>
     <div class="dhist" id="dHist"></div>
     <button class="back" id="backDuel">← В собор</button>
+  </div>
+</div>
+
+<div class="upg view" id="upg">
+  <div class="dialwrap">
+    <canvas class="px" id="uCanvas" width="160" height="160"></canvas>
+    <div class="ucenter"><b id="uChance">48.5%</b><span id="uTarget"></span></div>
+    <div class="ures" id="uRes"></div>
+  </div>
+  <div class="side">
+    <div class="title"><span id="upgTitle"></span><small>Upgrader</small></div>
+    <div class="plate"><div class="lbl">Баланс</div><div class="val" id="uBal">0</div></div>
+    <div class="plate betctl">
+      <button id="uBetDown" aria-label="Меньше">−</button>
+      <div><div class="lbl">Ставка · до 95 000</div><input class="val betin" id="uBet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
+      <button id="uBetUp" aria-label="Больше">+</button>
+    </div>
+    <div class="plate betctl">
+      <button id="uMultDown" aria-label="Меньше">−</button>
+      <div><div class="lbl">Множитель</div><div class="val" id="uMult">x2</div></div>
+      <button id="uMultUp" aria-label="Больше">+</button>
+    </div>
+    <button class="go" id="uGo">Улучшить</button>
+    <div class="next" id="uNext">Чем выше множитель, тем меньше красная дуга</div>
+    <div class="dhist" id="uHist"></div>
+    <button class="back" id="backUpg">← В собор</button>
+  </div>
+</div>
+
+<div class="cof view" id="cof">
+  <div class="crypt">
+    <div class="coffins" id="cofList"></div>
+    <div class="reel-win"><div class="lstrip" id="cofStrip"></div><div class="marker"></div><div class="cofres" id="cofRes"></div></div>
+    <div class="odds" id="cofOdds"></div>
+  </div>
+  <div class="side">
+    <div class="title"><span id="cofTitle"></span><small>Coffins</small></div>
+    <div class="plate"><div class="lbl">Баланс</div><div class="val" id="cBal2">0</div></div>
+    <div class="plate"><div class="lbl" id="cofName">Гроб</div><div class="val" id="cofPrice">0</div></div>
+    <button class="go" id="cofGo">Открыть гроб</button>
+    <div class="next" id="cofNext">Выбери гроб. Внутри может быть кость, а может корона графа</div>
+    <div class="dhist" id="cofHist"></div>
+    <button class="back" id="backCof">← В собор</button>
   </div>
 </div>
 
@@ -1065,6 +1181,8 @@ function pixelateTitle() {
   $("bjTitle").replaceWith(titleCanvas());
   $("crashTitle").replaceWith(titleCanvas());
   $("duelTitle").replaceWith(titleCanvas());
+  $("upgTitle").replaceWith(titleCanvas());
+  $("cofTitle").replaceWith(titleCanvas());
 }
 
 function cellHtml(cell, extra = "") {
@@ -1217,8 +1335,10 @@ document.addEventListener("keydown", (e) => { if (e.code === "Space" && view ===
 let view = "hub";
 function show(next) {
   view = next;
-  for (const id of ["hub", "slots", "mines", "bj", "crash", "duel"]) $(id).classList.toggle("on", id === next);
+  for (const id of ["hub", "slots", "mines", "bj", "crash", "duel", "upg", "cof"]) $(id).classList.toggle("on", id === next);
   if (next === "duel") renderRooms();
+  if (next === "upg") renderUpg();
+  if (next === "cof") renderCof();
   if (next === "slots") {
     const svg = document.querySelector(".nave svg.arch");
     svg.style.display = "";
@@ -1823,7 +1943,16 @@ function botWinFor(slot) {
     const mult = weighted([[1.5, 20], [2, 25], [3, 18], [5, 14], [10, 10], [25, 6], [60, 3], [150, 1]], r);
     return { name, bot: true, game: "Slots", amount: bet * mult, mult };
   }
-  if (g < 0.5) {
+  if (g < 0.4) {
+    const c = COFFINS[weighted([[0, 40], [1, 30], [2, 18], [3, 9], [4, 3]], r)];
+    const l = weighted(LOOT.filter((x) => x.m > 1).map((x) => [x, x.w]), r);
+    return { name, bot: true, game: "Coffins", amount: lootPay(l, c.price), mult: l.m * LOOT_K };
+  }
+  if (g < 0.47) {
+    const stake = Math.min(UPG_MAX, bet * 5), mult = weighted([[1.5, 20], [2, 30], [3, 20], [5, 14], [10, 8], [20, 4], [50, 2], [100, 1]], r);
+    return { name, bot: true, game: "Upgrader", amount: stake * mult, mult };
+  }
+  if (g < 0.56) {
     const stake = DUEL_STAKES[weighted([[0, 35], [1, 30], [2, 20], [3, 10], [4, 4], [5, 1]], r)];
     return { name, bot: true, game: "Duel", amount: stake * 2 * (1 - DUEL_FEE) };
   }
@@ -2033,6 +2162,257 @@ function duelFrame(now) {
   }
   if (duel.phase === "wait" || duel.phase === "walk" || t < DUEL_END + 1.5) duel.raf = requestAnimationFrame(duelFrame);
 }
+
+/* ---------- upgrader ---------- */
+// Stake a sum and aim for x times more. Win chance = 0.97 / multiplier, drawn as the red arc on the dial.
+// The blade stops at a uniformly random angle, so the arc's share of the circle is exactly the chance.
+const UPG_MULTS = [1.2, 1.5, 2, 3, 5, 10, 20, 50, 100];
+const UPG_EDGE = 0.97, UPG_MIN = 10, UPG_MAX = 95000;
+const UPG_STEPS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 95000];
+const UPG_SPIN_MS = 3400;
+const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, arcStart: 0, t0: 0, angle: 0, tick: 0, res: null, hist: [] };
+const upgChance = () => UPG_EDGE / UPG_MULTS[upg.mult];
+const clampBet = (v) => Math.min(UPG_MAX, Math.max(UPG_MIN, Math.round(v) || UPG_MIN));
+
+const UW = 160, UC = 80, toRad = (deg) => (deg - 90) * Math.PI / 180;
+function annulus(x, r1, r2, a0, a1) {
+  x.beginPath(); x.arc(UC, UC, r2, toRad(a0), toRad(a1)); x.arc(UC, UC, r1, toRad(a1), toRad(a0), true); x.closePath(); x.fill();
+}
+function drawUpg(now = performance.now()) {
+  const x = $("uCanvas").getContext("2d");
+  const span = upgChance() * 360;
+  const flash = upg.phase === "done" && upg.res ? Math.max(0, 1 - (now - upg.res.at) / 900) : 0;
+  x.clearRect(0, 0, UW, UW);
+  // stone rim and dark ring
+  x.fillStyle = "#151515"; x.beginPath(); x.arc(UC, UC, 77, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = "#6a6a6a"; x.lineWidth = 2; x.beginPath(); x.arc(UC, UC, 76, 0, Math.PI * 2); x.stroke();
+  x.fillStyle = "#262626"; annulus(x, 50, 70, 0, 360);
+  // the winning arc, pulsing gently; flares on a win, goes dull on a loss
+  const pulse = upg.phase === "idle" ? 0.85 + 0.15 * Math.sin(now / 300) : 1;
+  const won = upg.phase === "done" && upg.res && upg.res.win;
+  x.fillStyle = won ? `rgb(${200 + 55 * flash},${40 + 120 * flash},${40 + 120 * flash})` : upg.phase === "done" && upg.res ? "#4a1010" : `rgba(176,28,28,${pulse})`;
+  annulus(x, 50, 70, upg.arcStart, upg.arcStart + span);
+  // tick marks every 10 degrees, longer every 90
+  x.fillStyle = "#080808";
+  for (let a = 0; a < 360; a += 10) {
+    const r0 = a % 90 ? 64 : 58;
+    for (let r = r0; r <= 70; r += 1) x.fillRect(Math.round(UC + r * Math.cos(toRad(a))), Math.round(UC + r * Math.sin(toRad(a))), 1, 1);
+  }
+  // inner disc with a faint gothic quatrefoil
+  const g = x.createRadialGradient(UC, UC, 4, UC, UC, 50);
+  g.addColorStop(0, "#202020"); g.addColorStop(1, "#090909");
+  x.fillStyle = g; x.beginPath(); x.arc(UC, UC, 49, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = "#1c1c1c"; x.lineWidth = 2;
+  for (const [dx, dy] of [[0, -14], [14, 0], [0, 14], [-14, 0]]) { x.beginPath(); x.arc(UC + dx, UC + dy, 14, 0, Math.PI * 2); x.stroke(); }
+  // the blade: a pointer living in the ring, so the centre text stays readable
+  const a = toRad(upg.angle), ca = Math.cos(a), sa = Math.sin(a);
+  const pt = (r, side = 0) => [UC + r * ca - side * sa, UC + r * sa + side * ca];
+  x.fillStyle = "#e8e8e8";
+  x.beginPath(); x.moveTo(...pt(74)); x.lineTo(...pt(56, -3)); x.lineTo(...pt(46, -2)); x.lineTo(...pt(46, 2)); x.lineTo(...pt(56, 3)); x.closePath(); x.fill();
+  x.fillStyle = "#7a7a7a"; x.beginPath(); x.moveTo(...pt(45, -7)); x.lineTo(...pt(45, 7)); x.lineTo(...pt(42, 7)); x.lineTo(...pt(42, -7)); x.closePath(); x.fill();
+  x.fillStyle = "#4a2a1a"; x.beginPath(); x.moveTo(...pt(42, -1.5)); x.lineTo(...pt(42, 1.5)); x.lineTo(...pt(35, 1.5)); x.lineTo(...pt(35, -1.5)); x.closePath(); x.fill();
+  x.fillStyle = "#c01c1c"; x.beginPath(); x.arc(...pt(66), 1.2, 0, Math.PI * 2); x.fill();     // blood on the tip
+}
+function renderUpg() {
+  const busy = upg.phase === "spin", mult = UPG_MULTS[upg.mult];
+  $("uBal").textContent = fmt(Wallet.get());
+  if (document.activeElement !== $("uBet")) $("uBet").value = fmt(upg.bet);
+  $("uMult").textContent = "x" + mult;
+  $("uChance").textContent = (upgChance() * 100).toFixed(upgChance() < 0.1 ? 2 : 1) + "%";
+  $("uTarget").textContent = `${fmt(upg.bet)} → ${fmt(upg.bet * mult)}`;
+  for (const id of ["uBetDown", "uBetUp", "uMultDown", "uMultUp", "backUpg", "uGo", "uBet"]) $(id).disabled = busy;
+  $("uBetDown").disabled ||= upg.bet <= UPG_MIN;
+  $("uBetUp").disabled ||= upg.bet >= UPG_MAX;
+  $("uMultDown").disabled ||= upg.mult === 0;
+  $("uMultUp").disabled ||= upg.mult === UPG_MULTS.length - 1;
+  $("uHist").innerHTML = upg.hist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : "−"}${fmt(Math.abs(h))}</span>`).join("");
+  if (!busy) drawUpg();
+}
+function spinUpg() {
+  if (upg.phase === "spin") return;
+  upg.bet = clampBet(upg.bet);
+  const bet = upg.bet, mult = UPG_MULTS[upg.mult];
+  if (!Wallet.bet(bet)) { $("uNext").textContent = "Не хватает монэток на ставку"; return; }
+  upg.arcStart = rnd() * 360;                       // a fresh spot for the arc every round
+  const land = rnd() * 360;
+  const win = ((land - upg.arcStart + 360) % 360) < upgChance() * 360;
+  upg.from = upg.angle % 360;
+  upg.to = upg.from + 360 * 5 + ((land - upg.from + 360) % 360);
+  Object.assign(upg, { phase: "spin", t0: performance.now(), tick: Math.floor(upg.from / 10), res: { win, bet, prize: bet * mult, mult } });
+  $("uRes").textContent = ""; $("uRes").className = "ures";
+  $("uNext").textContent = "Клинок вращается…";
+  updateHud(); renderUpg();
+  requestAnimationFrame(upgFrame);
+}
+function upgFrame(now) {
+  if (upg.phase === "spin") {
+    const p = Math.min(1, (now - upg.t0) / UPG_SPIN_MS), e = 1 - (1 - p) ** 4;
+    upg.angle = upg.from + (upg.to - upg.from) * e;
+    const tk = Math.floor(upg.angle / 10);
+    if (tk !== upg.tick) { upg.tick = tk; Sfx.play("tick"); }
+    if (p >= 1) finishUpg(now);
+  }
+  drawUpg(now);
+  if (upg.phase === "spin" || (upg.res && now - upg.res.at < 1000)) requestAnimationFrame(upgFrame);
+}
+function finishUpg(now) {
+  const r = upg.res;
+  upg.phase = "done"; r.at = now; upg.angle %= 360;
+  if (r.win) {
+    Wallet.win(r.prize);
+    pushWin({ name: "Ты", you: true, game: "Upgrader", amount: r.prize, mult: r.mult });
+    $("uRes").textContent = `Улучшено · +${fmt(r.prize)}`;
+    $("uNext").textContent = `Клинок попал в дугу. ${fmt(r.bet)} превратились в ${fmt(r.prize)}`;
+    upg.hist.unshift(r.prize - r.bet);
+    Sfx.play(r.mult >= 10 ? "big" : "win");
+  } else {
+    $("uRes").textContent = "Сгорело"; $("uRes").classList.add("lose");
+    $("uNext").textContent = "Клинок прошёл мимо дуги";
+    upg.hist.unshift(-r.bet);
+    Sfx.play("lose");
+  }
+  upg.hist.length = Math.min(upg.hist.length, 10);
+  updateHud(); renderUpg();
+}
+// bet: typed by hand (digits only, 10..95 000) or stepped with − / +
+$("uBet").addEventListener("input", () => {
+  const digits = $("uBet").value.replace(/\D/g, "").slice(0, 6);
+  $("uBet").value = digits;
+  if (digits) { upg.bet = Math.min(UPG_MAX, Number(digits)); if (Number(digits) > UPG_MAX) $("uBet").value = UPG_MAX; }
+  renderUpg();
+});
+$("uBet").addEventListener("blur", () => { upg.bet = clampBet(upg.bet); renderUpg(); });
+$("uBet").addEventListener("keydown", (e) => { if (e.key === "Enter") $("uBet").blur(); });
+$("uBetDown").onclick = () => { upg.bet = [...UPG_STEPS].reverse().find((s) => s < upg.bet) ?? UPG_MIN; renderUpg(); };
+$("uBetUp").onclick = () => { upg.bet = UPG_STEPS.find((s) => s > upg.bet) ?? UPG_MAX; renderUpg(); };
+$("uMultDown").onclick = () => { upg.mult = Math.max(0, upg.mult - 1); renderUpg(); };
+$("uMultUp").onclick = () => { upg.mult = Math.min(UPG_MULTS.length - 1, upg.mult + 1); renderUpg(); };
+$("uGo").onclick = spinUpg;
+$("doorUpg").onclick = () => show("upg");
+$("backUpg").onclick = () => show("hub");
+// Payout check: __simulateUpg(mult index) -> % returned
+window.__simulateUpg = function (mi = 2, rounds = 300000) {
+  let back = 0;
+  for (let i = 0; i < rounds; i++) {
+    const arc = rnd() * 360, land = rnd() * 360;
+    if (((land - arc + 360) % 360) < UPG_EDGE / UPG_MULTS[mi] * 360) back += UPG_MULTS[mi];
+  }
+  return +(back / rounds * 100).toFixed(2);
+};
+
+/* ---------- coffins ---------- */
+// Case opening with coffins. Every coffin shares one loot table; an item pays price x multiplier.
+// Multipliers are scaled by LOOT_K so the expected payout is exactly 97% of the coffin price.
+const LOOT = [
+  { name: "Кость", face: "🦴", m: 0.2, w: 30, rc: "#3a3a3a" },
+  { name: "Огарок свечи", face: "🕯️", m: 0.5, w: 25, rc: "#4e4e4e" },
+  { name: "Ржавый ключ", face: "🗝️", m: 0.8, w: 18, rc: "#6a6a6a" },
+  { name: "Кольцо вдовы", face: "💍", m: 1.2, w: 12, rc: "#8a8a8a" },
+  { name: "Серебряный кинжал", face: "🗡️", m: 2, w: 8, rc: "#bdbdbd" },
+  { name: "Урна с прахом", face: "⚱️", m: 3, w: 4, rc: "#e6e6e6" },
+  { name: "Кубок крови", face: "🍷", m: 5, w: 2, rc: "#8e1b1b" },
+  { name: "Корона графа", face: "👑", m: 10, w: 0.8, rc: "#c01c1c" },
+  { name: "Сердце вампира", face: "❤️", m: 25, w: 0.2, rc: "#ff3a3a" },
+];
+const LOOT_W = LOOT.reduce((a, l) => a + l.w, 0);
+const LOOT_K = 0.97 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
+const COFFINS = [
+  { name: "Сосновый гроб", price: 100, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
+  { name: "Дубовый гроб", price: 500, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
+  { name: "Гроб графа", price: 2500, w1: "#151515", w2: "#353535", cross: "#f0f0f0" },
+  { name: "Саркофаг", price: 10000, w1: "#6a6a6a", w2: "#a0a0a0", cross: "#151515" },
+  { name: "Гроб вампира", price: 50000, w1: "#2a0505", w2: "#5e0e0e", cross: "#ff4a4a" },
+];
+const cof = { sel: 0, phase: "idle", t0: 0, dist: 0, step: 0, tick: -1, won: null, hist: [] };
+const lootPay = (item, price) => Math.round(price * item.m * LOOT_K);
+const pickLoot = () => weighted(LOOT.map((l) => [l, l.w]));
+
+function buildLootSprites() {
+  const emoji = (n) => `${Math.round(n * 0.82)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
+  for (const l of LOOT) l.spr = glyph(l.face, emoji, "#fff");
+}
+const lootCard = (l, price) => `<div class="loot" style="--rc:${l.rc}"><img src="${l.spr}" alt=""><i>${l.name}</i><b>${fmt(lootPay(l, price))}</b></div>`;
+function renderCof() {
+  const c = COFFINS[cof.sel], busy = cof.phase === "spin";
+  $("cBal2").textContent = fmt(Wallet.get());
+  $("cofName").textContent = c.name;
+  $("cofPrice").textContent = fmt(c.price);
+  $("cofList").innerHTML = COFFINS.map((k, i) =>
+    `<button class="coffin ${i === cof.sel ? "on" : ""} ${busy && i === cof.sel ? "shake" : ""}" data-cof="${i}" ${busy ? "disabled" : ""} style="--w1:${k.w1};--w2:${k.w2};--cross:${k.cross}">` +
+    `<div class="box"></div><b>${k.name}</b><span>${fmt(k.price)}</span></button>`).join("");
+  $("cofOdds").innerHTML = LOOT.map((l) => `<span style="--rc:${l.rc}">${fmt(lootPay(l, c.price))} · ${(l.w / LOOT_W * 100).toFixed(l.w < 1 ? 1 : 0)}%</span>`).join("");
+  $("cofGo").disabled = busy || Wallet.get() < c.price;
+  $("backCof").disabled = busy;
+  $("cofHist").innerHTML = cof.hist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : "−"}${fmt(Math.abs(h))}</span>`).join("");
+  if (cof.phase === "idle" && !$("cofStrip").children.length) fillStrip(null);
+}
+// Strip of random loot; the won item sits near the end so the reel has a long run-up.
+const STRIP_LEN = 46, WIN_AT = 40;
+function fillStrip(won) {
+  const price = COFFINS[cof.sel].price;
+  const items = Array.from({ length: STRIP_LEN }, (_, i) => (won && i === WIN_AT ? won : pickLoot()));
+  const strip = $("cofStrip");
+  strip.style.setProperty("--lw", "calc(var(--cell) * .62)");
+  strip.innerHTML = items.map((l) => lootCard(l, price)).join("");
+  strip.style.transform = "translateX(0)";
+}
+function openCoffin() {
+  const c = COFFINS[cof.sel];
+  if (cof.phase === "spin") return;
+  if (!Wallet.bet(c.price)) { $("cofNext").textContent = "Не хватает монэток на этот гроб"; return; }
+  cof.won = pickLoot();
+  fillStrip(cof.won);
+  $("cofRes").classList.remove("on");
+  const strip = $("cofStrip"), card = strip.children[0], win = strip.parentElement;
+  cof.step = card.offsetWidth + 6;
+  // land the marker somewhere inside the won card, never exactly on its edge
+  cof.dist = WIN_AT * cof.step + card.offsetWidth / 2 - win.clientWidth / 2 + (rnd() - 0.5) * card.offsetWidth * 0.7;
+  Object.assign(cof, { phase: "spin", t0: performance.now(), tick: -1 });
+  $("cofNext").textContent = "Крышка скрипит…";
+  updateHud(); renderCof();
+  requestAnimationFrame(cofFrame);
+}
+function cofFrame(now) {
+  const p = Math.min(1, (now - cof.t0) / 5200), e = 1 - (1 - p) ** 4;
+  const x = cof.dist * e;
+  $("cofStrip").style.transform = `translateX(${-x}px)`;
+  const under = Math.floor((x + $("cofStrip").parentElement.clientWidth / 2) / cof.step);
+  if (under !== cof.tick) { cof.tick = under; Sfx.play("tick"); }
+  if (p < 1) return requestAnimationFrame(cofFrame);
+  finishCoffin();
+}
+function finishCoffin() {
+  const c = COFFINS[cof.sel], l = cof.won, pay = lootPay(l, c.price);
+  cof.phase = "idle";
+  Wallet.win(pay);
+  $("cofStrip").children[WIN_AT].classList.add("won");
+  $("cofRes").innerHTML = `<img src="${l.spr}" alt="" style="width:calc(var(--cell)*.5);image-rendering:pixelated">${l.name}<small>+${fmt(pay)} · x${(pay / c.price).toFixed(2)}</small>`;
+  $("cofRes").classList.add("on");
+  $("cofNext").textContent = pay >= c.price ? `В гробу было: ${l.name}. Неплохо` : `В гробу было: ${l.name}. Мертвец оказался беден`;
+  cof.hist.unshift(pay - c.price);
+  cof.hist.length = Math.min(cof.hist.length, 10);
+  if (pay > c.price) pushWin({ name: "Ты", you: true, game: "Coffins", amount: pay, mult: pay / c.price });
+  Sfx.play(l.m >= 5 ? "big" : l.m >= 1 ? "win" : "lose");
+  updateHud(); renderCof();
+}
+$("cofList").onclick = (e) => {
+  const b = e.target.closest("button[data-cof]");
+  if (!b || cof.phase === "spin") return;
+  cof.sel = +b.dataset.cof;
+  $("cofRes").classList.remove("on");
+  fillStrip(null);
+  renderCof();
+};
+$("cofRes").onclick = () => $("cofRes").classList.remove("on");
+$("cofGo").onclick = openCoffin;
+$("doorCof").onclick = () => show("cof");
+$("backCof").onclick = () => show("hub");
+// Payout check: __simulateCoffins() -> % of the price returned on average
+window.__simulateCoffins = function (rounds = 300000) {
+  let back = 0;
+  for (let i = 0; i < rounds; i++) back += lootPay(pickLoot(), 10000);
+  return +(back / rounds / 10000 * 100).toFixed(2);
+};
 
 /* ---------- crows ---------- */
 // Pixel crows on the backdrop: some perch on the lit window sills, some cross the sky.
@@ -2314,6 +2694,9 @@ async function init() {
   $("doorCrashImg").src = SPR.pug;
   $("soundImg").src = SPR.S;
   $("doorDuelImg").src = SPR.rott;
+  $("doorUpgImg").src = SPR.guide;
+  buildLootSprites();
+  $("doorCofImg").src = SPR.cross;
   buildMinesGrid();
   updateMines();
   $("ptTable").innerHTML = Object.entries(SYMBOLS).filter(([, s]) => s.pays)
