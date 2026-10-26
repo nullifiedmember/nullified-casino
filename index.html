@@ -8,10 +8,10 @@
      Sign-in reads the hu_* params from the page address, the SDK is only needed for payments. -->
 <!-- The SDK only talks to huEVO pages on the domains it is told; huEVO also runs on mirror domains, so the
      address of the page the game is actually embedded in (the browser reports it) is added to the list. -->
-<script async src="https://huevo.su/static/js/huevo-apps-v1.js" data-origins="huevo.lol"
+<script async src="https://huevo.su/static/js/huevo-apps-v1.js" data-origins="huevo.lol huevo.departament.site"
   onload="try {
     var host = (location.ancestorOrigins && location.ancestorOrigins[0]) || (document.referrer && new URL(document.referrer).origin) || '';
-    huevo.init({ origins: ['huevo.su', 'huevo.lol'].concat(host ? [host] : []) }).catch(function () {});
+    huevo.init({ origins: ['huevo.su', 'huevo.lol', 'huevo.departament.site'].concat(host ? [host] : []) }).catch(function () {});
   } catch (e) {}"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Crect width='13' height='13' fill='%23111'/%3E%3Cg fill='%23e6e6e6'%3E%3Crect x='1' y='3' width='1' height='1'/%3E%3Crect x='11' y='3' width='1' height='1'/%3E%3Crect x='1' y='4' width='2' height='1'/%3E%3Crect x='10' y='4' width='2' height='1'/%3E%3Crect x='1' y='5' width='3' height='1'/%3E%3Crect x='9' y='5' width='3' height='1'/%3E%3Crect x='2' y='6' width='4' height='1'/%3E%3Crect x='7' y='6' width='4' height='1'/%3E%3Crect x='4' y='7' width='1' height='1'/%3E%3Crect x='6' y='7' width='1' height='1'/%3E%3Crect x='8' y='7' width='1' height='1'/%3E%3Crect x='5' y='8' width='3' height='1'/%3E%3Crect x='5' y='9' width='1' height='1'/%3E%3Crect x='7' y='9' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%23c01c1c'%3E%3Crect x='5' y='7' width='1' height='1'/%3E%3Crect x='7' y='7' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
