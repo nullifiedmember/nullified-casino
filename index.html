@@ -131,7 +131,8 @@
   .fsbar { display: none; position: fixed; top: 54px; left: 50%; transform: translateX(-50%); z-index: 5; white-space: nowrap;
     background: linear-gradient(#3a0d0d, #1a0505); color: #fff; padding: 4px 18px; border: 1px solid #c94a4a; font-family: var(--frak); font-size: 20px; }
   .fsbar.on { display: block; }
-  .test { position: fixed; bottom: 8px; left: 8px; z-index: 5; font-size: 12px; letter-spacing: .1em; background: rgba(0,0,0,.6); padding: 3px 8px; color: #aaa; }
+  /* the mode label sits under the ticker and lets clicks through: at the bottom it covered «Пополнить» */
+  .test { position: fixed; top: 50px; left: 8px; z-index: 5; font-size: 12px; letter-spacing: .1em; background: rgba(0,0,0,.6); padding: 3px 8px; color: #aaa; pointer-events: none; }
   .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.72); z-index: 10; }
   .modal.on { display: flex; }
   .card { background: linear-gradient(#1d1d1d, #0c0c0c); color: var(--silver); border: 1px solid var(--edge); padding: 20px 26px;
