@@ -33,9 +33,12 @@
   /* backdrop: cathedral silhouette and drifting fog */
   .backdrop { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
   .backdrop svg { position: absolute; left: 0; bottom: 0; width: 100%; height: 92%; }
+  /* the softness comes from the gradients themselves: a live blur over four full-width layers cost a
+     full-screen filter pass every frame and made the game stutter inside the huEVO frame */
   .fog { position: absolute; left: -50%; width: 200%; height: 45%; opacity: .55;
-    background: radial-gradient(ellipse at 25% 50%, var(--fog), transparent 60%), radial-gradient(ellipse at 75% 60%, var(--fog), transparent 55%);
-    filter: blur(18px); animation: drift 38s linear infinite alternate; will-change: transform; }
+    background: radial-gradient(ellipse at 25% 50%, var(--fog), color-mix(in srgb, var(--fog) 35%, transparent) 35%, transparent 68%),
+      radial-gradient(ellipse at 75% 60%, var(--fog), color-mix(in srgb, var(--fog) 35%, transparent) 32%, transparent 64%);
+    animation: drift 38s linear infinite alternate; will-change: transform; }
   .fog.f1 { top: 8%; }
   .fog.f2 { top: 48%; opacity: .5; animation-duration: 55s; animation-direction: alternate-reverse; }
   .fog.f4 { top: 30%; height: 35%; opacity: .4; animation-duration: 46s; }
@@ -44,8 +47,8 @@
 
   /* dragons: far away inside the backdrop, under the fog and behind the crows; not clickable */
   .dragons { position: absolute; inset: 0; pointer-events: none; }
-  .dragon { position: absolute; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; opacity: .7;
-    filter: blur(.5px); will-change: transform; }
+  .dragon { position: absolute; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; opacity: .6;
+    will-change: transform; }
   /* crows: above the backdrop, below the games; each crow is clickable */
   .crows { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .crow { position: absolute; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; pointer-events: auto;
@@ -70,6 +73,9 @@
   .reel::after { content: ""; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(#000 0%, transparent 14%, transparent 86%, #000 100%); opacity: .7; }
   .strip { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+  /* reels already rolling while the server draws the result */
+  .strip.prespin { animation: prespin .45s linear infinite; }
+  @keyframes prespin { from { transform: translateY(-50%); } to { transform: translateY(0); } }
   .cell { height: var(--cell); display: flex; align-items: center; justify-content: center; position: relative;
     font-size: calc(var(--cell) * .58); line-height: 1; }
   .cell .g { filter: grayscale(1) contrast(1.25) brightness(1.15) drop-shadow(0 0 10px rgba(255,255,255,.25)); }
@@ -1061,7 +1067,18 @@ window.__simulate = function (rounds = 200000) {
 /* ---------- game server ---------- */
 // Everything with coins goes through the game server: it checks the huEVO launch signature, keeps the
 // balance in huEVO coins and draws every outcome. The page only shows what the server answers.
-const SERVER = "https://nullified-casino-server.vercel.app";
+// The relay on deno.dev opens from Russia, where many providers block *.vercel.app; the direct
+// address is the fallback. The first one that answers is used.
+const SERVERS = ["https://purple-sawfish-6360.nullifiedmember.deno.net", "https://nullified-casino-server.vercel.app"];
+let SERVER = SERVERS[0];
+async function pickServer() {
+  for (const s of SERVERS) {
+    try {
+      const r = await fetch(s + "/", { signal: AbortSignal.timeout(4000) });
+      if (r.ok) { SERVER = s; return; }
+    } catch {}
+  }
+}
 // live: the last poll got through; seq counts game actions so a poll that crossed one is not trusted;
 // holdUntil keeps a poll from showing a result an animation is still about to reveal
 const Net = { token: "", user: null, test: false, live: false, lastWin: 0, seq: 0, holdUntil: 0, polling: false, wake: null };
@@ -1737,7 +1754,20 @@ function updateHud() {
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Spin the reels on the click itself, so the trip to the server is hidden inside the spin.
+function preSpin() {
+  reels.forEach((strip, c) => {
+    const table = reelTable(c, state.fsLeft > 0);
+    const cells = Array.from({ length: 12 }, () => makeCell(weighted(table)));
+    strip.style.transition = "none"; strip.style.transform = "";
+    strip.innerHTML = [...cells, ...cells].map((cell) => cellHtml(cell)).join("");   // doubled: the loop has no seam
+    strip.classList.add("prespin");
+  });
+}
+function stopPreSpin() { reels.forEach((strip) => strip.classList.remove("prespin")); }
 async function animate(grid) {
+  const spun = reels[0].classList.contains("prespin");
+  stopPreSpin();
   const cellPx = reels[0].parentElement.clientHeight / 3;
   const jobs = grid.map((col, c) => {
     const strip = reels[c];
@@ -1746,7 +1776,8 @@ async function animate(grid) {
     const table = reelTable(c, state.fsLeft > 0);
     for (let i = 0; i < n; i++) filler.push(makeCell(weighted(table)));
     // final cells on top, current cells at the bottom; strip slides down
-    const current = state.grid[c];
+    // reels that were already rolling keep showing a blur of random symbols, not the last result
+    const current = spun ? filler.slice(-3) : state.grid[c];
     strip.style.transition = "none";
     strip.innerHTML = [...col, ...filler, ...current].map((cell) => cellHtml(cell)).join("");
     const travel = (n + 3) * cellPx;
@@ -1778,8 +1809,9 @@ async function spin() {
   updateHud();
   // the server charges the bet, draws the grid and pays; free spins and sticky wilds live there too
   let res;
+  preSpin();
   try { res = await api("/api/slots/spin", { bet: state.bet }, { keepBalance: true }); }
-  catch (e) { state.busy = false; state.auto = false; $("msg").textContent = e.message; updateHud(); return; }
+  catch (e) { stopPreSpin(); render(state.grid); state.busy = false; state.auto = false; $("msg").textContent = e.message; updateHud(); return; }
   if (!free) Wallet.set(Wallet.get() - res.bet);
   state.fsLeft = res.fsLeft;
   const bet = res.bet, grid = res.grid;
@@ -3206,13 +3238,13 @@ async function init() {
   startCrows();
   requestAnimationFrame(crashFrame);
   try { if (window.huevo) huevo.init().catch(() => {}); } catch {}
-  // sign in to the game server; a free Render instance may need up to a minute to wake up
+  // sign in to the game server, through whichever address this player's network lets through
   for (let i = 0; i < 12; i++) {
-    try { await login(); break; }
+    try { await pickServer(); await login(); break; }
     catch (e) {
       if ($("gate").classList.contains("on")) break;     // not opened from huEVO
-      toast(i ? "Будим сервер игры…" : "Подключаемся к серверу…", false);
-      await sleep(5000);
+      toast("Подключаемся к серверу…", false);
+      await sleep(3000);
     }
   }
   let t;
