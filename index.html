@@ -1127,9 +1127,9 @@ window.__simulate = function (rounds = 200000) {
 /* ---------- game server ---------- */
 // Everything with coins goes through the game server: it checks the huEVO launch signature, keeps the
 // balance in huEVO coins and draws every outcome. The page only shows what the server answers.
-// The direct address first; the relay on deno.net only for networks that block *.vercel.app, which keeps
-// the relay's free request limit for the players who need it. The first one that answers is used.
-const SERVERS = ["https://nullified-casino-server.vercel.app", "https://purple-sawfish-6360.nullifiedmember.deno.net"];
+// The direct address first; the relay on Cloudflare Workers only for networks that block *.vercel.app, which
+// keeps the relay's free daily request limit for the players who need it. The first one that answers is used.
+const SERVERS = ["https://nullified-casino-server.vercel.app", "https://nullified-casino.dmitriibyshkov.workers.dev"];
 let SERVER = SERVERS[0];
 async function pickServer() {
   for (const s of SERVERS) {
@@ -2015,7 +2015,7 @@ $("cashOk").onclick = async () => {
   if (!amount) return;
   // every step says what is going on, so a slow network never looks like a dead button
   const step = (text) => { $("cashText").innerHTML = text; };
-  if (!Net.token) { toast("Нет входа в игру: обнови страницу (Ctrl+F5)", true); return; }
+  if (!Net.token) { toast("Игра ещё не подключилась к серверу. Подожди немного или обнови страницу", true); return; }
   $("cashOk").disabled = true;
   try {
     if (cashMode === "withdraw") {
@@ -3385,12 +3385,13 @@ async function init() {
   startCrows();
   requestAnimationFrame(crashFrame);
   // sign in to the game server, through whichever address this player's network lets through
-  for (let i = 0; i < 12; i++) {
+  // keeps trying for as long as the page is open: a flaky mobile network often comes back after a while
+  for (let i = 0; !Net.token; i++) {
     try { await pickServer(); await login(); break; }
     catch (e) {
       if ($("gate").classList.contains("on")) break;     // not opened from huEVO
-      toast("Подключаемся к серверу…", false);
-      await sleep(3000);
+      toast(i < 5 ? "Подключаемся к серверу…" : "Не удаётся подключиться к серверу игры: " + e.message + ". Пробуем ещё…", i >= 5);
+      await sleep(i < 5 ? 3000 : 8000);
     }
   }
   let t;
