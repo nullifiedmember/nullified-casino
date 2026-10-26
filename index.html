@@ -425,6 +425,16 @@
   .coffin.shake .box { animation: rattle .12s linear infinite; }
   @keyframes rattle { 0%,100% { transform: translate(0, -4px) rotate(0); } 25% { transform: translate(-2px, -5px) rotate(-2deg); } 75% { transform: translate(2px, -3px) rotate(2deg); } }
   .reel-win { position: relative; flex: 1; overflow: hidden; border: 1px solid #3c3c3c; background: #070707; box-shadow: inset 0 0 30px #000; }
+  /* one reel per case opened at once, stacked */
+  .cofreels { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+  .cofreels .reel-win { min-height: 0; }
+  /* several cases: every reel keeps a readable height and the crypt grows to fit them */
+  .cofreels.multi .reel-win { flex: none; height: calc(var(--cell) * .62); }
+  .crypt:has(.cofreels.multi) { height: auto; }
+  .crypt:has(.cofreels.multi) .coffins { height: calc(var(--cell) * 1.25); }
+  .cofreels.multi .cofres { font-size: calc(var(--cell) * .12); gap: 2px; flex-direction: row; }
+  .cofreels.multi .cofres img { width: calc(var(--cell) * .22) !important; }
+  .cofreels.multi .cofres small { font-size: calc(var(--cell) * .045); margin-left: 8px; }
   .reel-win::before, .reel-win::after { content: ""; position: absolute; top: 0; bottom: 0; width: 18%; z-index: 2; pointer-events: none; }
   .reel-win::before { left: 0; background: linear-gradient(90deg, #070707, transparent); }
   .reel-win::after { right: 0; background: linear-gradient(-90deg, #070707, transparent); }
@@ -799,13 +809,19 @@
 <div class="cof view" id="cof">
   <div class="crypt">
     <div class="coffins" id="cofList"></div>
-    <div class="reel-win"><div class="lstrip" id="cofStrip"></div><div class="marker"></div><div class="cofres" id="cofRes"></div></div>
+    <div class="cofreels" id="cofReels"></div>
     <div class="odds" id="cofOdds"></div>
   </div>
   <div class="side">
     <div class="title"><span id="cofTitle"></span><small>Coffins</small></div>
     <div class="plate"><div class="lbl">Баланс</div><div class="val" id="cBal2">0</div></div>
     <div class="plate"><div class="lbl" id="cofName">Кейс</div><div class="val" id="cofPrice">0</div></div>
+    <div class="plate betctl">
+      <button id="cofCntDown" aria-label="Меньше кейсов">−</button>
+      <div><div class="lbl">Кейсов</div><div class="val" id="cofCnt">1</div></div>
+      <button id="cofCntUp" aria-label="Больше кейсов">+</button>
+    </div>
+    <div class="row"><button id="cofSpeed" title="Скорость прокрута">Обычно</button></div>
     <button class="go" id="cofGo">Открыть кейс</button>
     <div class="next" id="cofNext">Выбери кейс и открой его</div>
     <div class="dhist" id="cofHist"></div>
@@ -2855,15 +2871,16 @@ window.__simulateUpg = function (mi = 2, rounds = 300000) {
 // tiers (the server draws a tier), so each case returns the same share of its price; an item pays
 // price x multiplier, scaled by LOOT_K so the expected payout is exactly 75% of the case price.
 const LOOT = [
-  { m: 0.2, w: 30, rc: "#3a3a3a" },
-  { m: 0.5, w: 25, rc: "#4e4e4e" },
-  { m: 0.8, w: 18, rc: "#6a6a6a" },
-  { m: 1.2, w: 12, rc: "#8a8a8a" },
-  { m: 2, w: 8, rc: "#bdbdbd" },
-  { m: 3, w: 4, rc: "#e6e6e6" },
-  { m: 5, w: 2, rc: "#8e1b1b" },
-  { m: 10, w: 0.8, rc: "#c01c1c" },
-  { m: 25, w: 0.2, rc: "#ff3a3a" },
+  // the first four pay less than the case, the other five (27% together) pay it back or more
+  { m: 0.1, w: 25, rc: "#3a3a3a" },
+  { m: 0.3, w: 22, rc: "#4e4e4e" },
+  { m: 0.5, w: 16, rc: "#6a6a6a" },
+  { m: 0.8, w: 10, rc: "#8a8a8a" },
+  { m: 1.1, w: 15.2, rc: "#bdbdbd" },
+  { m: 1.6, w: 7, rc: "#e6e6e6" },
+  { m: 3, w: 3.4, rc: "#8e1b1b" },
+  { m: 7, w: 1.3, rc: "#c01c1c" },
+  { m: 27, w: 0.1, rc: "#ff3a3a" },
 ];
 // [name, icon] from the cheapest tier to the rarest
 const CASE_ITEMS = [
@@ -2882,13 +2899,15 @@ const CASE_LOOT = CASE_ITEMS.map((items) => items.map(([name, icon], i) => ({ ..
 const LOOT_W = LOOT.reduce((a, l) => a + l.w, 0);
 const LOOT_K = 0.75 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
 const COFFINS = [
-  { name: "Простой кейс", price: 100, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
-  { name: "Обычный кейс", price: 500, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
-  { name: "Редкий кейс", price: 2500, w1: "#151515", w2: "#353535", cross: "#f0f0f0" },
-  { name: "Эпический кейс", price: 10000, w1: "#6a6a6a", w2: "#a0a0a0", cross: "#151515" },
-  { name: "Легендарный кейс", price: 50000, w1: "#2a0505", w2: "#5e0e0e", cross: "#ff4a4a" },
+  { name: "Простой кейс", price: 10, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
+  { name: "Обычный кейс", price: 50, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
+  { name: "Редкий кейс", price: 200, w1: "#151515", w2: "#353535", cross: "#f0f0f0" },
+  { name: "Эпический кейс", price: 1000, w1: "#6a6a6a", w2: "#a0a0a0", cross: "#151515" },
+  { name: "Легендарный кейс", price: 5000, w1: "#2a0505", w2: "#5e0e0e", cross: "#ff4a4a" },
 ];
-const cof = { sel: 0, phase: "idle", t0: 0, dist: 0, step: 0, tick: -1, won: null, hist: [] };
+// n: cases opened at once (1-5), one reel each; fast: skip the roll and show the loot at once (remembered here)
+const cof = { sel: 0, phase: "idle", t0: 0, tick: -1, hist: [], n: 1, reels: [], fast: (() => { try { return localStorage.getItem("nullified_cof_fast") === "1"; } catch { return false; } })() };
+const COF_MAX = 5, COF_SPIN_MS = 5200, COF_STAGGER_MS = 260;
 const lootPay = (item, price) => Math.round(price * item.m * LOOT_K);
 const pickLoot = (ci = cof.sel) => weighted(CASE_LOOT[ci].map((l) => [l, l.w]));
 
@@ -2905,75 +2924,120 @@ function renderCof() {
   $("cofList").innerHTML = COFFINS.map((k, i) =>
     `<button class="coffin ${i === cof.sel ? "on" : ""} ${busy && i === cof.sel ? "shake" : ""}" data-cof="${i}" ${busy ? "disabled" : ""} style="--w1:${k.w1};--w2:${k.w2};--cross:${k.cross}">` +
     `<div class="box"></div><b>${k.name}</b><span>${fmt(k.price)}</span></button>`).join("");
-  $("cofOdds").innerHTML = LOOT.map((l) => `<span style="--rc:${l.rc}">${fmt(lootPay(l, c.price))} · ${(l.w / LOOT_W * 100).toFixed(l.w < 1 ? 1 : 0)}%</span>`).join("");
-  $("cofGo").disabled = busy || Wallet.get() < c.price;
+  $("cofOdds").innerHTML = LOOT.map((l) => `<span style="--rc:${l.rc}">${fmt(lootPay(l, c.price))} · ${+(l.w / LOOT_W * 100).toFixed(1)}%</span>`).join("");
+  const total = c.price * cof.n;
+  $("cofCnt").textContent = cof.n;
+  $("cofCntDown").disabled = busy || cof.n <= 1;
+  $("cofCntUp").disabled = busy || cof.n >= COF_MAX;
+  $("cofSpeed").textContent = cof.fast ? "Мгновенно" : "Обычно";
+  $("cofSpeed").classList.toggle("on", cof.fast);
+  $("cofSpeed").disabled = busy;
+  $("cofPrice").textContent = fmt(total);
+  $("cofGo").textContent = cof.n > 1 ? `Открыть ${cof.n} ${cof.n < 5 ? "кейса" : "кейсов"} · ${fmt(total)}` : "Открыть кейс";
+  $("cofGo").disabled = busy || Wallet.get() < total;
   $("backCof").disabled = busy;
   $("cofHist").innerHTML = cof.hist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : "−"}${fmt(Math.abs(h))}</span>`).join("");
-  if (cof.phase === "idle" && !$("cofStrip").children.length) fillStrip(null);
+  if (cof.phase === "idle" && cof.reels.length !== cof.n) buildReels();
 }
-// Strip of random loot; the won item sits near the end so the reel has a long run-up.
+// One reel per case: a strip of random loot, the won item near the end so the reel has a long run-up.
 const STRIP_LEN = 46, WIN_AT = 40;
-function fillStrip(won) {
+function buildReels() {
+  const box = $("cofReels");
+  box.classList.toggle("multi", cof.n > 1);
+  box.innerHTML = Array.from({ length: cof.n }, () =>
+    `<div class="reel-win"><div class="lstrip"></div><div class="marker"></div><div class="cofres"></div></div>`).join("");
+  cof.reels = [...box.children].map((el) => ({ el, strip: el.querySelector(".lstrip"), res: el.querySelector(".cofres") }));
+  cof.reels.forEach((r) => { r.res.onclick = () => r.res.classList.remove("on"); fillStrip(r, null); });
+}
+function fillStrip(reel, won) {
   const price = COFFINS[cof.sel].price;
   const items = Array.from({ length: STRIP_LEN }, (_, i) => (won && i === WIN_AT ? won : pickLoot()));
-  const strip = $("cofStrip");
-  strip.style.setProperty("--lw", "calc(var(--cell) * .62)");
-  strip.innerHTML = items.map((l) => lootCard(l, price)).join("");
-  strip.style.transform = "translateX(0)";
+  reel.strip.style.setProperty("--lw", `calc(var(--cell) * ${cof.n === 1 ? .62 : cof.n === 2 ? .5 : .4})`);
+  reel.strip.innerHTML = items.map((l) => lootCard(l, price)).join("");
+  reel.strip.style.transform = "translateX(0)";
 }
 async function openCoffin() {
-  const c = COFFINS[cof.sel];
+  const c = COFFINS[cof.sel], n = cof.n;
   if (cof.phase === "spin" || cof.pending) return;
-  // the server takes the price and draws the loot; the reel just rolls to it
+  // the server takes the price and draws every case; the reels just roll to what it drew
   cof.pending = true;
   let r;
-  try { r = await api("/api/coffin/open", { coffin: cof.sel }, { keepBalance: true }); }
+  try { r = await api("/api/coffin/open", { coffin: cof.sel, count: n }, { keepBalance: true }); }
   catch (e) { cof.pending = false; $("cofNext").textContent = e.message; return; }
   cof.pending = false;
-  Wallet.set(Wallet.get() - c.price);
-  cof.won = CASE_LOOT[cof.sel][r.loot]; cof.pay = r.pay; cof.pendingBalance = r.balance;
-  fillStrip(cof.won);
-  $("cofRes").classList.remove("on");
-  const strip = $("cofStrip"), card = strip.children[0], win = strip.parentElement;
-  cof.step = card.offsetWidth + 6;
-  // land the marker somewhere inside the won card, never exactly on its edge
-  cof.dist = WIN_AT * cof.step + card.offsetWidth / 2 - win.clientWidth / 2 + (rnd() - 0.5) * card.offsetWidth * 0.7;
+  Wallet.set(Wallet.get() - c.price * n);
+  const loots = r.loots || [r.loot], pays = r.pays || [r.pay];
+  cof.pendingBalance = r.balance;
+  if (cof.reels.length !== n) buildReels();
+  cof.reels.forEach((reel, i) => {
+    reel.won = CASE_LOOT[cof.sel][loots[i]]; reel.pay = pays[i];
+    fillStrip(reel, reel.won);
+    reel.res.classList.remove("on");
+    const card = reel.strip.children[0];
+    reel.step = card.offsetWidth + 6;
+    // land the marker somewhere inside the won card, never exactly on its edge
+    reel.dist = WIN_AT * reel.step + card.offsetWidth / 2 - reel.el.clientWidth / 2 + (rnd() - 0.5) * card.offsetWidth * 0.7;
+    reel.ms = COF_SPIN_MS + i * COF_STAGGER_MS;   // the reels stop one after another
+  });
   Object.assign(cof, { phase: "spin", t0: performance.now(), tick: -1 });
   $("cofNext").textContent = "Открываем…";
   updateHud(); renderCof();
+  if (cof.fast) {
+    cof.reels.forEach((reel) => { reel.strip.style.transform = `translateX(${-reel.dist}px)`; });
+    return finishCoffin();
+  }
   requestAnimationFrame(cofFrame);
 }
 function cofFrame(now) {
-  const p = Math.min(1, (now - cof.t0) / 5200), e = 1 - (1 - p) ** 4;
-  const x = cof.dist * e;
-  $("cofStrip").style.transform = `translateX(${-x}px)`;
-  const under = Math.floor((x + $("cofStrip").parentElement.clientWidth / 2) / cof.step);
-  if (under !== cof.tick) { cof.tick = under; Sfx.play("tick"); }
-  if (p < 1) return requestAnimationFrame(cofFrame);
+  let done = true;
+  cof.reels.forEach((reel, i) => {
+    const p = Math.min(1, (now - cof.t0) / reel.ms), x = reel.dist * (1 - (1 - p) ** 4);
+    reel.strip.style.transform = `translateX(${-x}px)`;
+    if (p < 1) done = false;
+    if (i === 0) {   // one ticking reel is enough sound
+      const under = Math.floor((x + reel.el.clientWidth / 2) / reel.step);
+      if (under !== cof.tick) { cof.tick = under; Sfx.play("tick"); }
+    }
+  });
+  if (!done) return requestAnimationFrame(cofFrame);
   finishCoffin();
 }
 function finishCoffin() {
-  const c = COFFINS[cof.sel], l = cof.won, pay = cof.pay;
+  const c = COFFINS[cof.sel];
   cof.phase = "idle";
   Wallet.set(cof.pendingBalance);
-  $("cofStrip").children[WIN_AT].classList.add("won");
-  $("cofRes").innerHTML = `<img src="${l.spr}" alt="" style="width:calc(var(--cell)*.5);image-rendering:pixelated">${l.name}<small>+${fmt(pay)} · x${(pay / c.price).toFixed(2)}</small>`;
-  $("cofRes").classList.add("on");
-  $("cofNext").textContent = pay >= c.price ? `Выпало: ${l.name}. В плюсе` : `Выпало: ${l.name}. В минусе`;
-  cof.hist.unshift(pay - c.price);
+  let paid = 0, best = null;
+  for (const reel of cof.reels) {
+    const l = reel.won, pay = reel.pay;
+    paid += pay;
+    if (!best || l.m > best.m) best = l;
+    reel.strip.children[WIN_AT].classList.add("won");
+    reel.res.innerHTML = `<img src="${l.spr}" alt="" style="width:calc(var(--cell)*.5);image-rendering:pixelated">${l.name}<small>+${fmt(pay)} · x${(pay / c.price).toFixed(2)}</small>`;
+    reel.res.classList.add("on");
+  }
+  const cost = c.price * cof.reels.length, net = paid - cost;
+  $("cofNext").textContent = cof.reels.length === 1
+    ? (net >= 0 ? `Выпало: ${best.name}. В плюсе` : `Выпало: ${best.name}. В минусе`)
+    : `${cof.reels.length} кейсов: +${fmt(paid)} за ${fmt(cost)} · ${net >= 0 ? "в плюсе" : "в минусе"}`;
+  cof.hist.unshift(net);
   cof.hist.length = Math.min(cof.hist.length, 10);
-  Sfx.play(l.m >= 5 ? "big" : l.m >= 1 ? "win" : "lose");
+  Sfx.play(best.m >= 3 ? "big" : net >= 0 ? "win" : "lose");
   updateHud(); renderCof();
 }
 $("cofList").onclick = (e) => {
   const b = e.target.closest("button[data-cof]");
   if (!b || cof.phase === "spin") return;
   cof.sel = +b.dataset.cof;
-  $("cofRes").classList.remove("on");
-  fillStrip(null);
+  buildReels();
   renderCof();
 };
-$("cofRes").onclick = () => $("cofRes").classList.remove("on");
+$("cofCntDown").onclick = () => { cof.n = Math.max(1, cof.n - 1); buildReels(); renderCof(); };
+$("cofCntUp").onclick = () => { cof.n = Math.min(COF_MAX, cof.n + 1); buildReels(); renderCof(); };
+$("cofSpeed").onclick = () => {
+  cof.fast = !cof.fast;
+  try { localStorage.setItem("nullified_cof_fast", cof.fast ? "1" : "0"); } catch {}
+  renderCof();
+};
 $("cofGo").onclick = openCoffin;
 $("doorCof").onclick = () => show("cof");
 $("backCof").onclick = () => show("hub");
