@@ -2743,10 +2743,10 @@ function duelFrame(now) {
 }
 
 /* ---------- upgrader ---------- */
-// Stake a sum and aim for x times more. Win chance = 0.85 / multiplier, drawn as the red arc on the dial.
+// Stake a sum and aim for x times more. Win chance = 0.65 / multiplier, drawn as the red arc on the dial.
 // The blade stops at a uniformly random angle, so the arc's share of the circle is exactly the chance.
 const UPG_MULTS = [1.2, 1.5, 2, 3, 5, 10, 20, 50, 100];
-const UPG_EDGE = 0.85, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
+const UPG_EDGE = 0.65, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
 const UPG_SPIN_MS = 3400;
 const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, t0: 0, angle: 180, tick: 0, res: null, hist: [], bannerTimer: 0 };
 const upgChance = () => UPG_EDGE / UPG_MULTS[upg.mult];
