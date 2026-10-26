@@ -816,6 +816,7 @@
     <div class="title"><span id="cofTitle"></span><small>Coffins</small></div>
     <div class="plate"><div class="lbl">Баланс</div><div class="val" id="cBal2">0</div></div>
     <div class="plate"><div class="lbl" id="cofName">Кейс</div><div class="val" id="cofPrice">0</div></div>
+    <div class="plate"><div class="lbl">Общий выигрыш</div><div class="val" id="cofWin">0</div></div>
     <div class="plate betctl">
       <button id="cofCntDown" aria-label="Меньше кейсов">−</button>
       <div><div class="lbl">Кейсов</div><div class="val" id="cofCnt">1</div></div>
@@ -2981,6 +2982,7 @@ async function openCoffin() {
   });
   Object.assign(cof, { phase: "spin", t0: performance.now(), tick: -1 });
   $("cofNext").textContent = "Открываем…";
+  $("cofWin").textContent = "…";
   updateHud(); renderCof();
   if (cof.fast) {
     cof.reels.forEach((reel) => { reel.strip.style.transform = `translateX(${-reel.dist}px)`; });
@@ -3016,9 +3018,10 @@ function finishCoffin() {
     reel.res.classList.add("on");
   }
   const cost = c.price * cof.reels.length, net = paid - cost;
+  $("cofWin").textContent = fmt(paid);
   $("cofNext").textContent = cof.reels.length === 1
-    ? (net >= 0 ? `Выпало: ${best.name}. В плюсе` : `Выпало: ${best.name}. В минусе`)
-    : `${cof.reels.length} кейсов: +${fmt(paid)} за ${fmt(cost)} · ${net >= 0 ? "в плюсе" : "в минусе"}`;
+    ? `Выпало: ${best.name}. Выигрыш ${fmt(paid)} · ${net >= 0 ? "в плюсе" : "в минусе"}`
+    : `Общий выигрыш: ${fmt(paid)} за ${fmt(cost)} · ${net >= 0 ? "в плюсе +" + fmt(net) : "в минусе −" + fmt(-net)}`;
   cof.hist.unshift(net);
   cof.hist.length = Math.min(cof.hist.length, 10);
   Sfx.play(best.m >= 3 ? "big" : net >= 0 ? "win" : "lose");
