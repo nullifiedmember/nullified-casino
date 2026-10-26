@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Nullified Casino</title>
+<script src="https://huevo.su/static/js/huevo-apps-v1.js" data-origins="huevo.lol"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'%3E%3Crect width='13' height='13' fill='%23111'/%3E%3Cg fill='%23e6e6e6'%3E%3Crect x='1' y='3' width='1' height='1'/%3E%3Crect x='11' y='3' width='1' height='1'/%3E%3Crect x='1' y='4' width='2' height='1'/%3E%3Crect x='10' y='4' width='2' height='1'/%3E%3Crect x='1' y='5' width='3' height='1'/%3E%3Crect x='9' y='5' width='3' height='1'/%3E%3Crect x='2' y='6' width='4' height='1'/%3E%3Crect x='7' y='6' width='4' height='1'/%3E%3Crect x='4' y='7' width='1' height='1'/%3E%3Crect x='6' y='7' width='1' height='1'/%3E%3Crect x='8' y='7' width='1' height='1'/%3E%3Crect x='5' y='8' width='3' height='1'/%3E%3Crect x='5' y='9' width='1' height='1'/%3E%3Crect x='7' y='9' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%23c01c1c'%3E%3Crect x='5' y='7' width='1' height='1'/%3E%3Crect x='7' y='7' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -433,6 +434,25 @@
     background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; color: #fff; }
   .cof .next { text-align: center; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .065); color: #bdbdbd; line-height: 1.8; min-height: 3.6em; }
 
+  /* wallet: deposit / withdraw, sign-in gate, toasts */
+  .purse { display: flex; align-items: center; gap: 12px; }
+  .purse button { height: 34px; padding: 0 14px; font-size: 10px !important; }
+  #depositBtn { background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; }
+  #who { font-family: "Press Start 2P", monospace; font-size: 9px; color: #9a9a9a; text-shadow: 0 0 4px #000; }
+  .cashcard { display: flex; flex-direction: column; gap: 12px; min-width: min(360px, 90vw); }
+  .cashcard .betin { font-size: 16px; padding: 10px; }
+  .cashbtns { display: flex; gap: 10px; }
+  .cashbtns button { flex: 1; height: 38px; }
+  #cashOk { background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; }
+  .gate { position: fixed; inset: 0; z-index: 30; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.82); }
+  .gate.on { display: flex; }
+  .gate a { color: #ff8a8a; font-family: "Press Start 2P", monospace; font-size: 11px; }
+  .toast { position: fixed; left: 50%; bottom: 46px; transform: translate(-50%, 20px); z-index: 30; opacity: 0; pointer-events: none;
+    padding: 10px 16px; background: linear-gradient(#202020, #0c0c0c); border: 1px solid var(--edge); color: #fff;
+    font-family: "Press Start 2P", monospace; font-size: 10px; transition: opacity .25s, transform .25s; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .toast.bad { border-color: #c94a4a; color: #ff9a9a; }
+
   @media (max-aspect-ratio: 5/4) {
     :root { --cell: min(13.5vh, 18vw, 150px); }
     .stage { flex-direction: column; gap: calc(var(--cell) * .12); }
@@ -598,14 +618,17 @@
     <button class="door" id="doorCof">
       <img id="doorCofImg" alt="">
       <h3>Coffins</h3>
-      <p>Открой гроб, забери добро</p>
+      <p>Классические кейсы</p>
     </button>
   </div>
   <button class="arrow" id="doorsNext" aria-label="Следующие игры">&gt;</button>
   </div>
   <div class="plate"><div class="lbl">Баланс</div><div class="val" id="hubBal">0</div></div>
-  <!-- test mode only: remove once real huEVO coins are connected -->
-  <button class="back" id="topUp">+1 000 000 (тест)</button>
+  <div class="purse">
+    <button class="back" id="depositBtn">Пополнить</button>
+    <span id="who"></span>
+    <button class="back" id="withdrawBtn">Вывести</button>
+  </div>
 </div>
 
 <div class="mines view" id="mines">
@@ -635,7 +658,7 @@
       <div class="hand-label" id="bjDealerLabel">Дилер</div>
       <div class="hand" id="bjDealer"></div>
     </div>
-    <div class="rule">Blackjack платит 3:2 · Дилер стоит на мягких 17</div>
+    <div class="rule">Blackjack платит 6:5 · Дилер стоит на мягких 17</div>
     <div class="seat">
       <div class="hands" id="bjPlayer"></div>
     </div>
@@ -696,7 +719,7 @@
 
 <div class="duel view" id="duel">
   <div class="hall">
-    <div class="hall-head">Залы дуэлей <span>50 на 50 · комиссия 3%</span></div>
+    <div class="hall-head">Залы дуэлей <span>50 на 50 · комиссия 10%</span></div>
     <div class="rooms" id="duelRooms"></div>
   </div>
   <div class="arena">
@@ -751,13 +774,27 @@
   <div class="side">
     <div class="title"><span id="cofTitle"></span><small>Coffins</small></div>
     <div class="plate"><div class="lbl">Баланс</div><div class="val" id="cBal2">0</div></div>
-    <div class="plate"><div class="lbl" id="cofName">Гроб</div><div class="val" id="cofPrice">0</div></div>
-    <button class="go" id="cofGo">Открыть гроб</button>
-    <div class="next" id="cofNext">Выбери гроб. Внутри может быть кость, а может корона графа</div>
+    <div class="plate"><div class="lbl" id="cofName">Кейс</div><div class="val" id="cofPrice">0</div></div>
+    <button class="go" id="cofGo">Открыть кейс</button>
+    <div class="next" id="cofNext">Выбери кейс и открой его</div>
     <div class="dhist" id="cofHist"></div>
     <button class="back" id="backCof">← В собор</button>
   </div>
 </div>
+
+<div class="modal" id="cashModal"><div class="card cashcard">
+  <h2 id="cashTitle">Пополнить</h2>
+  <p id="cashText"></p>
+  <input class="betin" id="cashAmount" type="text" inputmode="numeric" autocomplete="off" aria-label="Сумма">
+  <div class="cashbtns"><button id="cashOk">Пополнить</button><button id="cashCancel">Отмена</button></div>
+</div></div>
+
+<div class="gate" id="gate"><div class="card">
+  <h2>Nullified Casino</h2>
+  <p>Играть можно только через huEVO: ставки идут твоими монэтками huEVO.</p>
+  <p><a href="https://huevo.su/apps/223" target="_top">Открыть игру на huEVO</a></p>
+</div></div>
+<div class="toast" id="toast"></div>
 
 <div class="modal" id="ptModal"><div class="card">
   <h2>Скрижаль выплат</h2>
@@ -1021,19 +1058,101 @@ window.__simulate = function (rounds = 200000) {
            featureEvery: Math.round(rounds / Math.max(features, 1)), fsShare: +(fsPaid / Math.max(paid, 1) * 100).toFixed(1) };
 };
 
-/* ---------- wallet (test mode) ---------- */
-// To use real huEVO coins, replace this object with calls to your game server,
-// which talks to https://huevo.su/api/apps/v1 with the app's client_secret.
+/* ---------- game server ---------- */
+// Everything with coins goes through the game server: it checks the huEVO launch signature, keeps the
+// balance in huEVO coins and draws every outcome. The page only shows what the server answers.
+const SERVER = "https://nullified-casino-server.vercel.app";
+// live: the last poll got through; seq counts game actions so a poll that crossed one is not trusted;
+// holdUntil keeps a poll from showing a result an animation is still about to reveal
+const Net = { token: "", user: null, test: false, live: false, lastWin: 0, seq: 0, holdUntil: 0, polling: false, wake: null };
 const Wallet = {
-  key: "flcasino_test_balance",
-  get() {
-    try { const v = Number(localStorage.getItem(this.key)); return Number.isFinite(v) && v > 0 ? v : 10000; }
-    catch { return this._mem ?? 10000; }
+  value: 0,
+  get() { return this.value; },
+  set(v, fromPoll) {
+    if (typeof v !== "number" || !isFinite(v)) return;
+    if (!fromPoll) Net.holdUntil = 0;
+    this.value = v; refreshBalances();
   },
-  set(v) { this._mem = v; try { localStorage.setItem(this.key, String(v)); } catch {} },
-  bet(amount) { const b = this.get(); if (b < amount) return false; this.set(b - amount); return true; },
-  win(amount) { if (amount > 0) this.set(this.get() + amount); },
 };
+function refreshBalances() {
+  for (const id of ["bal", "hubBal", "mBal", "bjBal", "cBal", "dBal", "uBal", "cBal2"]) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = fmt(Wallet.value);
+  }
+}
+// POST to the game server. The fresh balance in a reply is applied at once, unless the caller shows
+// an animation first and applies it itself (keepBalance).
+async function api(path, body, { keepBalance = false, retried = false } = {}) {
+  let r, j = {};
+  if (path !== "/api/poll") Net.seq++;
+  if (keepBalance) Net.holdUntil = Date.now() + 15000;
+  try {
+    r = await fetch(SERVER + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + Net.token }, body: JSON.stringify(body || {}) });
+    j = await r.json().catch(() => ({}));
+  } catch { throw new Error("Нет связи с сервером игры"); }
+  if (r.status === 401 && path !== "/api/login" && !retried) { await login(); return api(path, body, { keepBalance, retried: true }); }  // the session ran out
+  if (!j.ok) { if (typeof j.balance === "number") Wallet.set(j.balance); const e = new Error(j.error || "Ошибка сервера"); e.data = j; throw e; }
+  if (!keepBalance && path !== "/api/poll" && typeof j.balance === "number") Wallet.set(j.balance);
+  return j;
+}
+// huEVO passes signed hu_* params in the game URL; the SDK also hands them over.
+function launchParams() {
+  try { if (window.huevo && huevo.launchParams) { const p = huevo.launchParams(); if (p && p.hu_user_id) return p; } } catch {}
+  const p = {};
+  new URLSearchParams(location.search).forEach((v, k) => { if (k.startsWith("hu_")) p[k] = v; });
+  return p;
+}
+async function login() {
+  const launch = launchParams();
+  if (!launch.hu_user_id) { $("gate").classList.add("on"); throw new Error("Открой игру через huEVO"); }
+  const j = await api("/api/login", { launch });
+  Net.token = j.token; Net.user = j.user; Net.test = !!j.test;
+  $("gate").classList.remove("on");
+  $("who").textContent = j.user.name;
+  document.querySelector(".test").textContent = Net.test ? "ТЕСТОВЫЙ РЕЖИМ huEVO" : "МОНЭТКИ huEVO";
+  takeWins(j.wins);
+  Net.live = true;
+  pollLoop();
+  return j;
+}
+// Live state comes by polling: shared Crash rounds, Duel rooms, everyone's wins and the balance.
+// It polls fast only where something moves: the bat's flight and a player waiting in a Duel room.
+function pollDelay() {
+  if (document.hidden) return 20000;
+  if (view === "crash") return crash.phase === "fly" ? 400 : 1000;
+  if (view === "duel") return duel.phase === "wait" ? 1000 : 2500;
+  return 8000;
+}
+function pollNow() { if (Net.wake) Net.wake(); }
+const pollWait = (ms) => new Promise((resolve) => {
+  const t = setTimeout(resolve, ms);
+  Net.wake = () => { clearTimeout(t); resolve(); };
+});
+async function pollLoop() {
+  if (Net.polling) return;
+  Net.polling = true;
+  for (;;) {
+    const seq = Net.seq, sent = Date.now();
+    try {
+      const j = await api("/api/poll", { since: Net.lastWin, crash: view === "crash", duel: view === "duel" });
+      Net.live = true;
+      takeWins(j.wins);
+      if (j.crash) crashOnState(j.crash, (sent + Date.now()) / 2);
+      if (j.duel) duelOnPoll(j.duel, j.balance);
+      if (seq === Net.seq && Date.now() > Net.holdUntil) Wallet.set(j.balance, true);
+    } catch { Net.live = false; }
+    await pollWait(pollDelay());
+  }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) pollNow(); });
+function takeWins(wins) {
+  for (const w of (wins || []).slice().reverse()) if (w.id > Net.lastWin) { Net.lastWin = w.id; pushWin(w); }
+}
+function toast(text, bad) {
+  const t = $("toast");
+  t.textContent = text; t.className = "toast on" + (bad ? " bad" : "");
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.className = "toast"; }, 3200);
+}
 
 /* ---------- UI ---------- */
 const $ = (id) => document.getElementById(id);
@@ -1182,14 +1301,19 @@ const ICON_DRAW = {
     x.fillStyle = "#6a4a18"; x.beginPath(); x.arc(56, 22, 7, 0, Math.PI * 2); x.fill();
     x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 4; x.beginPath(); x.moveTo(42, 36); x.quadraticCurveTo(36, 52, 36, 74); x.stroke();
   },
-  knife(x) {
+  // the sword hidden under a mine: long steel blade, crossguard, wrapped grip, round pommel
+  sword(x) {
     x.save(); x.translate(56, 56); x.rotate(-Math.PI / 4);
-    shape(x, grad(x, 0, -10, 0, 10, [[0, "#ffffff"], [.5, "#c8c8c8"], [1, "#7a7a7a"]]), "#3a3a3a", 2.5, () => {
-      x.moveTo(-8, -9); x.lineTo(44, -9); x.quadraticCurveTo(52, -6, 54, 0); x.lineTo(54, 2); x.lineTo(-8, 9);
+    shape(x, grad(x, 0, -8, 0, 8, [[0, "#ffffff"], [.5, "#cfcfcf"], [1, "#7a7a7a"]]), "#3a3a3a", 2.5, () => {
+      x.moveTo(-26, -7); x.lineTo(56, -7); x.lineTo(70, 0); x.lineTo(56, 7); x.lineTo(-26, 7);
     });
-    x.strokeStyle = "#8a8a8a"; x.lineWidth = 2; x.beginPath(); x.moveTo(-4, -3); x.lineTo(46, -3); x.stroke();
-    shape(x, grad(x, 0, -9, 0, 9, [[0, "#8a5a38"], [1, "#3a2010"]]), "#1e1008", 2.5, () => { x.moveTo(-50, -8); x.lineTo(-8, -8); x.lineTo(-8, 8); x.lineTo(-50, 8); });
-    x.fillStyle = "#e0e0e0"; for (const rx of [-40, -26, -14]) { x.beginPath(); x.arc(rx, 0, 2.6, 0, Math.PI * 2); x.fill(); }
+    x.strokeStyle = "#8a8a8a"; x.lineWidth = 2.5; x.beginPath(); x.moveTo(-24, 0); x.lineTo(58, 0); x.stroke();     // fuller
+    shape(x, grad(x, -36, 0, -26, 0, [[0, "#6a6a6a"], [.5, "#e6e6e6"], [1, "#6a6a6a"]]), "#2a2a2a", 2.5, () => {
+      x.moveTo(-36, -24); x.lineTo(-26, -24); x.lineTo(-26, 24); x.lineTo(-36, 24);
+    });
+    shape(x, grad(x, 0, -6, 0, 6, [[0, "#9a6a48"], [1, "#3a2010"]]), "#1e1008", 2.5, () => { x.moveTo(-60, -6); x.lineTo(-36, -6); x.lineTo(-36, 6); x.lineTo(-60, 6); });
+    x.strokeStyle = "#2a1408"; x.lineWidth = 2; for (const gx of [-54, -48, -42]) { x.beginPath(); x.moveTo(gx, -6); x.lineTo(gx + 3, 6); x.stroke(); }
+    x.fillStyle = rgrad(x, -66, -2, 1, 9, [[0, "#ffffff"], [1, "#7a7a7a"]]); x.beginPath(); x.arc(-66, 0, 8, 0, Math.PI * 2); x.fill();
     x.restore();
   },
   spade(x) {
@@ -1272,24 +1396,182 @@ const ICON_DRAW = {
     });
     x.fillStyle = "rgba(255,255,255,.75)"; x.beginPath(); x.ellipse(32, 36, 7, 11, -.5, 0, Math.PI * 2); x.fill();
   },
+  // ---- case loot ----
+  nail(x) {
+    x.save(); x.translate(56, 56); x.rotate(Math.PI / 5);
+    shape(x, grad(x, -6, 0, 6, 0, [[0, "#6a6a6a"], [.5, "#f0f0f0"], [1, "#5a5a5a"]]), "#2a2a2a", 2.5, () => {
+      x.moveTo(-5, -38); x.lineTo(5, -38); x.lineTo(4, 34); x.lineTo(0, 50); x.lineTo(-4, 34);
+    });
+    shape(x, grad(x, 0, -50, 0, -36, METAL), "#2a2a2a", 2.5, () => { x.ellipse(0, -42, 19, 6, 0, 0, Math.PI * 2); });
+    x.restore();
+  },
+  coin(x) {
+    shape(x, rgrad(x, 44, 42, 4, 50, [[0, "#fff4c8"], [.5, "#d8b050"], [1, "#6a4a18"]]), "#3a2a0a", 3, () => { x.arc(56, 56, 42, 0, Math.PI * 2); });
+    x.lineWidth = 3; x.strokeStyle = "#8a6a28"; x.beginPath(); x.arc(56, 56, 31, 0, Math.PI * 2); x.stroke();
+    x.fillStyle = "#7a5a20"; x.fillRect(52, 36, 8, 40); x.fillRect(41, 47, 30, 8);
+  },
+  stake(x) {
+    x.save(); x.translate(56, 56); x.rotate(-Math.PI / 4);
+    shape(x, grad(x, 0, -9, 0, 9, [[0, "#c89a68"], [.5, "#8a5a30"], [1, "#3a2010"]]), "#1e1008", 2.5, () => {
+      x.moveTo(-52, -9); x.lineTo(26, -9); x.lineTo(56, 0); x.lineTo(26, 9); x.lineTo(-52, 9);
+    });
+    x.strokeStyle = "#4a2a10"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(-46, -3); x.lineTo(18, -3); x.moveTo(-40, 4); x.lineTo(8, 4); x.stroke();
+    x.restore();
+  },
+  lantern(x) {
+    x.lineWidth = 5; x.strokeStyle = "#5a5a5a"; x.beginPath(); x.arc(56, 16, 10, Math.PI, 0); x.stroke();
+    shape(x, grad(x, 0, 16, 0, 30, METAL), "#2a2a2a", 2.5, () => { x.moveTo(34, 30); x.lineTo(56, 16); x.lineTo(78, 30); });
+    shape(x, rgrad(x, 56, 62, 4, 32, [[0, "#ffffff"], [.4, "#ffe080"], [1, "#a06010"]]), "#2a2a2a", 3, () => {
+      x.moveTo(36, 30); x.lineTo(76, 30); x.lineTo(80, 88); x.lineTo(32, 88);
+    });
+    x.strokeStyle = "#2a2a2a"; x.lineWidth = 3; x.beginPath(); x.moveTo(56, 30); x.lineTo(56, 88); x.moveTo(34, 59); x.lineTo(78, 59); x.stroke();
+    shape(x, grad(x, 0, 88, 0, 100, METAL), "#2a2a2a", 2.5, () => { x.moveTo(26, 88); x.lineTo(86, 88); x.lineTo(82, 100); x.lineTo(30, 100); });
+  },
+  book(x) {
+    shape(x, "#f0e8d0", "#3a2e14", 2, () => { x.moveTo(30, 20); x.lineTo(94, 16); x.lineTo(94, 92); x.lineTo(30, 98); });
+    shape(x, grad(x, 18, 0, 86, 0, [[0, "#6a4a40"], [.45, "#b89080"], [1, "#5a3a30"]]), "#2a1410", 3, () => {
+      x.moveTo(18, 14); x.lineTo(86, 10); x.lineTo(86, 90); x.lineTo(18, 96);
+    });
+    shape(x, grad(x, 18, 0, 28, 0, [[0, "#3a2420"], [1, "#7a5a50"]]), "#2a1410", 2, () => { x.moveTo(18, 14); x.lineTo(28, 14); x.lineTo(28, 96); x.lineTo(18, 96); });
+    x.fillStyle = grad(x, 0, 30, 0, 80, [[0, "#fff0c0"], [1, "#8a6a28"]]);
+    x.fillRect(53, 30, 8, 46); x.fillRect(42, 42, 30, 8);
+  },
+  potion(x) {
+    shape(x, rgrad(x, 46, 60, 4, 42, [[0, "#ffffff"], [.3, "#e0e0e0"], [1, "#7a7a7a"]]), "#2a2a2a", 3, () => {
+      x.moveTo(48, 18); x.lineTo(64, 18); x.lineTo(64, 40); x.bezierCurveTo(98, 50, 98, 102, 56, 104); x.bezierCurveTo(14, 102, 14, 50, 48, 40);
+    });
+    shape(x, rgrad(x, 50, 78, 4, 34, [[0, "#ff8080"], [.5, "#c01c1c"], [1, "#5a0606"]]), null, 0, () => {
+      x.moveTo(22, 70); x.bezierCurveTo(40, 62, 72, 78, 90, 70); x.bezierCurveTo(90, 92, 78, 101, 56, 101); x.bezierCurveTo(34, 101, 22, 92, 22, 70);
+    });
+    shape(x, grad(x, 0, 6, 0, 20, [[0, "#c89a68"], [1, "#5a3a18"]]), "#1e1008", 2.5, () => { x.moveTo(45, 6); x.lineTo(67, 6); x.lineTo(65, 20); x.lineTo(47, 20); });
+    x.fillStyle = "rgba(255,255,255,.85)"; x.beginPath(); x.ellipse(36, 58, 5, 11, .4, 0, Math.PI * 2); x.fill();
+  },
+  amulet(x) {
+    x.lineWidth = 4; x.strokeStyle = "#a8a8a8";
+    x.beginPath(); x.moveTo(24, 6); x.quadraticCurveTo(56, 66, 88, 6); x.stroke();
+    shape(x, grad(x, 28, 0, 84, 0, [[0, "#6a4a18"], [.4, "#ffe8a0"], [1, "#6a4a18"]]), "#3a2a0a", 3, () => { x.ellipse(56, 74, 27, 31, 0, 0, Math.PI * 2); });
+    shape(x, rgrad(x, 50, 68, 2, 18, [[0, "#ffffff"], [.4, "#ff4040"], [1, "#5a0404"]]), "#2a0404", 2, () => { x.ellipse(56, 74, 14, 17, 0, 0, Math.PI * 2); });
+  },
+  // a vampire's upper jaw: gum, a row of small teeth and two long fangs
+  fang(x) {
+    shape(x, rgrad(x, 56, 20, 4, 60, [[0, "#f08080"], [.6, "#b03030"], [1, "#5a0808"]]), "#2a0202", 3, () => {
+      x.moveTo(6, 30); x.bezierCurveTo(20, 4, 92, 4, 106, 30); x.bezierCurveTo(92, 44, 20, 44, 6, 30);
+    });
+    for (let tx = 38; tx <= 70; tx += 8) {
+      shape(x, grad(x, 0, 36, 0, 52, BONE), "#5a5448", 2, () => { x.moveTo(tx - 3.5, 38); x.lineTo(tx + 3.5, 38); x.lineTo(tx + 3, 52); x.lineTo(tx - 3, 52); });
+    }
+    for (const fx of [24, 88]) {
+      shape(x, grad(x, fx - 10, 0, fx + 10, 0, BONE), "#3a3a3a", 2.5, () => {
+        x.moveTo(fx - 10, 32); x.lineTo(fx + 10, 34); x.quadraticCurveTo(fx + 5, 70, fx + (fx < 56 ? 4 : -4), 98); x.quadraticCurveTo(fx - 5, 66, fx - 10, 32);
+      });
+    }
+  },
+  garlic(x) {
+    shape(x, rgrad(x, 44, 58, 4, 48, [[0, "#ffffff"], [.6, "#e8e0d0"], [1, "#9a9080"]]), "#4a4438", 3, () => {
+      x.moveTo(56, 24); x.bezierCurveTo(72, 40, 100, 52, 96, 76); x.bezierCurveTo(92, 100, 20, 100, 16, 76); x.bezierCurveTo(12, 52, 40, 40, 56, 24);
+    });
+    x.strokeStyle = "#8a8270"; x.lineWidth = 2.5;
+    x.beginPath(); x.moveTo(54, 32); x.quadraticCurveTo(36, 60, 38, 94); x.stroke();
+    x.beginPath(); x.moveTo(58, 32); x.quadraticCurveTo(76, 60, 74, 94); x.stroke();
+    shape(x, grad(x, 0, 4, 0, 28, [[0, "#c8c0a8"], [1, "#8a8270"]]), "#4a4438", 2, () => { x.moveTo(52, 28); x.lineTo(53, 4); x.lineTo(60, 4); x.lineTo(60, 28); });
+  },
+  // a dead vampire laid out in an open coffin, a stake through the heart
+  corpse(x) {
+    shape(x, grad(x, 18, 0, 94, 0, [[0, "#5a4030"], [.5, "#b08860"], [1, "#4a3020"]]), "#1e1008", 3, () => {
+      x.moveTo(40, 2); x.lineTo(72, 2); x.lineTo(96, 30); x.lineTo(82, 110); x.lineTo(30, 110); x.lineTo(16, 30);
+    });
+    shape(x, "#5a1a1a", null, 0, () => { x.moveTo(42, 9); x.lineTo(70, 9); x.lineTo(89, 32); x.lineTo(77, 103); x.lineTo(35, 103); x.lineTo(23, 32); });
+    shape(x, grad(x, 30, 0, 82, 0, [[0, "#1a1a1a"], [.5, "#6a6a6a"], [1, "#1a1a1a"]]), "#000000", 2, () => {
+      x.moveTo(30, 44); x.lineTo(82, 44); x.lineTo(74, 101); x.lineTo(38, 101);
+    });
+    shape(x, rgrad(x, 52, 22, 2, 18, [[0, "#ffffff"], [1, "#c8c8d4"]]), "#2a2a2a", 2, () => { x.ellipse(56, 28, 15, 17, 0, 0, Math.PI * 2); });
+    x.fillStyle = "#0a0a0a";
+    x.beginPath(); x.moveTo(41, 24); x.quadraticCurveTo(56, 2, 71, 24); x.lineTo(56, 17); x.closePath(); x.fill();
+    x.fillRect(45, 28, 8, 3); x.fillRect(59, 28, 8, 3);
+    x.fillStyle = "#3a3a3a"; x.fillRect(50, 38, 12, 2);
+    shape(x, "#ffffff", "#3a3a3a", 1.5, () => { x.ellipse(47, 74, 9, 6, .5, 0, Math.PI * 2); });
+    shape(x, "#ffffff", "#3a3a3a", 1.5, () => { x.ellipse(65, 74, 9, 6, -.5, 0, Math.PI * 2); });
+    shape(x, grad(x, 52, 0, 60, 0, [[0, "#c89a68"], [1, "#4a2a10"]]), "#1e1008", 2, () => { x.moveTo(52, 46); x.lineTo(60, 46); x.lineTo(60, 64); x.lineTo(56, 70); x.lineTo(52, 64); });
+  },
 };
 // The bat is the one icon kept as flat 16x16 pixel art: white with red eyes, no grey crunch.
 const BAT_ICON = ["W......WW......W", "WW....WWWW....WW", "WWW..WRWWRW..WWW", "WWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWW",
   ".WWWLWWWWWWLWWW.", "..WL.LWWWWL.LW..", "..L....WW....L..", ".......LL......."];
 function batIcon() {
+  // 18x18 canvas with a 1px margin, so the 16px-wide bat fills the same share as the other icons
   const c = document.createElement("canvas");
-  c.width = c.height = 16;
-  const x = c.getContext("2d"), pal = { W: "#ececec", L: "#a8a8a8", R: "#c01c1c" }, top = Math.floor((16 - BAT_ICON.length) / 2);
-  BAT_ICON.forEach((row, y) => [...row].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i, top + y, 1, 1); } }));
+  c.width = c.height = 18;
+  const x = c.getContext("2d"), pal = { W: "#ececec", L: "#a8a8a8", R: "#c01c1c" }, top = Math.floor((18 - BAT_ICON.length) / 2);
+  BAT_ICON.forEach((row, y) => [...row].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(1 + i, top + y, 1, 1); } }));
   return c.toDataURL();
 }
-// Draw large, shrink to 28px with smoothing, then crunch to the game's grey pixel palette.
+// Bounding box of everything actually drawn on a canvas.
+function inkBox(c) {
+  const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    if (d[(y * c.width + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  return x1 < 0 ? [0, 0, c.width, c.height] : [x0, y0, x1 - x0 + 1, y1 - y0 + 1];
+}
+// Draw large, crop to the drawing and fit it into the same 25px box (centred, aspect kept), so every
+// icon has the same visual size; then crunch to the game's grey pixel palette.
+const ICON_FIT = 25;
+// Red layers drawn over an icon after the grey crunch, so blood stays red (same 112px coordinates).
+const ICON_BLOOD = {
+  sword(x) {
+    // blood smeared over the upper blade and dripping straight down from it
+    x.save(); x.translate(56, 56); x.rotate(-Math.PI / 4);
+    x.fillStyle = "#b01414";
+    x.beginPath(); x.moveTo(20, -7); x.lineTo(56, -7); x.lineTo(70, 0); x.lineTo(56, 7); x.lineTo(34, 7);
+    x.quadraticCurveTo(30, 2, 26, 6); x.quadraticCurveTo(22, 0, 20, -7); x.fill();
+    x.restore();
+    x.fillStyle = "#8e0e0e";
+    for (const [dx, dy, len] of [[78, 44, 14], [88, 34, 9], [70, 52, 10]]) {
+      x.fillRect(dx - 2, dy, 4, len); x.beginPath(); x.arc(dx, dy + len, 3.5, 0, Math.PI * 2); x.fill();
+    }
+  },
+  fang(x) {
+    x.fillStyle = "#b01414";
+    for (const tip of [28, 84]) { x.beginPath(); x.moveTo(tip - 3, 84); x.quadraticCurveTo(tip, 104, tip, 108); x.quadraticCurveTo(tip + 4, 96, tip + 3, 84); x.fill(); }
+  },
+  corpse(x) {
+    // a wet stain around the stake
+    x.fillStyle = "#c01414"; x.beginPath(); x.ellipse(56, 66, 9, 6, 0, 0, Math.PI * 2); x.fill();
+    x.fillRect(54, 66, 4, 18);
+  },
+};
 function pixelIcon(name, size = 28) {
   if (name === "bat") return batIcon();
   const big = document.createElement("canvas");
   big.width = big.height = ICON_SIZE;
   ICON_DRAW[name](big.getContext("2d"));
-  return sprite((x) => { x.imageSmoothingQuality = "high"; x.drawImage(big, 2, 2, size - 4, size - 4); }, size);
+  let blood = null;
+  if (ICON_BLOOD[name]) { blood = document.createElement("canvas"); blood.width = blood.height = ICON_SIZE; ICON_BLOOD[name](blood.getContext("2d")); }
+  // fit by the union of the icon and its blood, so drips aren't cut off
+  let [bx, by, bw, bh] = inkBox(big);
+  if (blood) {
+    const [cx, cy, cw, ch] = inkBox(blood);
+    const x1 = Math.max(bx + bw, cx + cw), y1 = Math.max(by + bh, cy + ch);
+    bx = Math.min(bx, cx); by = Math.min(by, cy); bw = x1 - bx; bh = y1 - by;
+  }
+  const k = ICON_FIT / Math.max(bw, bh), dw = bw * k, dh = bh * k, ox = (size - dw) / 2, oy = (size - dh) / 2;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const x = c.getContext("2d");
+  x.imageSmoothingQuality = "high";
+  x.drawImage(big, bx, by, bw, bh, ox, oy, dw, dh);
+  crunch(x, size, size);
+  if (blood) {
+    const t = document.createElement("canvas"); t.width = t.height = size;
+    const tx = t.getContext("2d"); tx.drawImage(blood, bx, by, bw, bh, ox, oy, dw, dh);
+    const img = tx.getImageData(0, 0, size, size), d = img.data;
+    for (let i = 3; i < d.length; i += 4) d[i] = d[i] > 90 ? 255 : 0;       // hard pixel edges, like the crunch
+    tx.putImageData(img, 0, 0);
+    x.drawImage(t, 0, 0);
+  }
+  return c.toDataURL();
 }
 const SYMBOL_ICON = { rott: "skull", pug: "bat", poodle: "candle", guide: "key", bone: "rose", S: "bell" };
 function buildSprites() {
@@ -1299,7 +1581,7 @@ function buildSprites() {
     else if (s.royal) SPR[k] = glyph(s.face, frak, "#eeeeee");
     else SPR[k] = pixelIcon(SYMBOL_ICON[k]);
   }
-  SPR.knife = pixelIcon("knife");
+  SPR.knife = pixelIcon("sword");      // the "knife" under a mine is now a bloody sword
   SPR.cross = pixelIcon("cross");
   SPR.spade = pixelIcon("spade");
 }
@@ -1490,41 +1772,41 @@ function showModal(id) { $(id).classList.add("on"); return new Promise((res) => 
 
 async function spin() {
   if (state.busy) return;
-  const bet = state.bet = clampBet(state.bet);
+  state.bet = clampBet(state.bet);
   const free = state.fsLeft > 0;
-  if (!free && !Wallet.bet(bet)) { $("msg").textContent = "Не хватает монэток на ставку"; state.auto = false; updateHud(); return; }
   state.busy = true; $("msg").textContent = ""; $("win").textContent = "0";
-  if (free) state.fsLeft--;
   updateHud();
-
-  const grid = spinGrid(free, free ? state.sticky : null);
+  // the server charges the bet, draws the grid and pays; free spins and sticky wilds live there too
+  let res;
+  try { res = await api("/api/slots/spin", { bet: state.bet }, { keepBalance: true }); }
+  catch (e) { state.busy = false; state.auto = false; $("msg").textContent = e.message; updateHud(); return; }
+  if (!free) Wallet.set(Wallet.get() - res.bet);
+  state.fsLeft = res.fsLeft;
+  const bet = res.bet, grid = res.grid;
   await animate(grid);
   state.grid = grid;
-  const res = evaluate(grid, bet);
   highlight(res);
-  Wallet.win(res.total);
-  if (res.total > 0) { pushWin({ name: "Ты", you: true, game: "Slots", amount: res.total }); Sfx.play(res.total >= bet * 10 ? "big" : "win"); }
+  Wallet.set(res.balance);
+  if (res.total > 0) Sfx.play(res.total >= bet * 10 ? "big" : "win");
   $("win").textContent = fmt(res.total);
-  if (free) { state.sticky = stickyFrom(grid, state.sticky); state.fsWin += res.total; }
+  state.fsWin = res.fsWin;
   if (res.total > 0) {
     const best = res.wins.sort((a, b) => b.amount - a.amount)[0];
     $("msg").textContent = best ? `Линия ${best.line + 1}: ${best.count} × ${symLabel(best.sym)}${best.mult > 1 ? " · x" + best.mult : ""} — +${fmt(res.total)}` : `Колокола: +${fmt(res.total)}`;
   }
 
-  if (!free && res.scatters.length >= 3) {
-    const n = weighted(FS_COUNTS.map((v, k) => [v, FS_COUNT_WEIGHTS[k]]));
-    state.fsLeft = n; state.fsWin = 0; state.sticky = new Map();
+  if (res.fsAwarded) {
+    const n = res.fsAwarded;
     $("fsTitle").textContent = "Бьёт полночь";
     $("fsBig").textContent = n + " фриспинов";
     $("fsText").textContent = "До конца полуночи витражи остаются на своих местах.";
     Sfx.play("big");
     state.busy = false; updateHud();
     await showModal("fsModal");
-  } else if (free && state.fsLeft === 0) {
+  } else if (res.fsEnded) {
     $("fsTitle").textContent = "Рассвет";
     $("fsBig").textContent = "+" + fmt(state.fsWin);
     $("fsText").textContent = "Полночь прошла. Выигрыш за фриспины уже на балансе.";
-    state.sticky = null;
     state.busy = false; updateHud();
     await showModal("fsModal");
   }
@@ -1568,6 +1850,7 @@ document.addEventListener("keydown", (e) => { if (e.code === "Space" && view ===
 let view = "hub";
 function show(next) {
   view = next;
+  pollNow();
   for (const id of ["hub", "slots", "mines", "bj", "crash", "duel", "upg", "cof"]) $(id).classList.toggle("on", id === next);
   if (next === "duel") renderRooms();
   if (next === "upg") renderUpg();
@@ -1609,13 +1892,60 @@ function renderDoors(dir = 0) {
 $("doorsPrev").onclick = () => { doorStart--; renderDoors(-1); };
 $("doorsNext").onclick = () => { doorStart++; renderDoors(1); };
 renderDoors();
-$("topUp").onclick =() => { Wallet.win(1000000); updateHud(); updateMines(); };
+// Deposit: the server opens a huEVO payment, the player confirms it in the huEVO window, then the
+// server checks the payment and credits the coins. Withdraw: the server pays out from the app wallet.
+// both ways the casino keeps a 5% fee (the server applies it; this only shows it)
+const CASH_FEE = 0.05;
+const afterFee = (amount) => Math.floor(amount * (1 - CASH_FEE));
+let cashMode = "deposit";
+function cashHint() {
+  const amount = Number($("cashAmount").value) || 0;
+  const ask = cashMode === "deposit" ? "Сколько монэток huEVO перевести в казино?" : `На балансе ${fmt(Wallet.get())}. Сколько вывести на твой счёт huEVO?`;
+  const net = cashMode === "deposit" ? `на баланс придёт ${fmt(afterFee(amount))}` : `на huEVO придёт ${fmt(afterFee(amount))}`;
+  $("cashText").innerHTML = `${ask}<br><small>Комиссия 5%: ${net}</small>`;
+}
+function openCash(mode) {
+  cashMode = mode;
+  $("cashTitle").textContent = mode === "deposit" ? "Пополнить баланс" : "Вывести на huEVO";
+  $("cashOk").textContent = mode === "deposit" ? "Пополнить" : "Вывести";
+  $("cashAmount").value = mode === "deposit" ? "1000" : String(Wallet.get());
+  cashHint();
+  $("cashModal").classList.add("on");
+  $("cashAmount").focus();
+}
+$("cashAmount").addEventListener("input", () => { $("cashAmount").value = $("cashAmount").value.replace(/\D/g, "").slice(0, 7); cashHint(); });
+$("cashCancel").onclick = () => $("cashModal").classList.remove("on");
+$("cashOk").onclick = async () => {
+  const amount = Number($("cashAmount").value);
+  if (!amount) return;
+  $("cashOk").disabled = true;
+  try {
+    if (cashMode === "withdraw") {
+      const r = await api("/api/withdraw", { amount });
+      toast(`Выведено ${fmt(r.paid || afterFee(amount))} на huEVO (комиссия 5%)`);
+    } else {
+      const { intent_id } = await api("/api/deposit", { amount });
+      $("cashModal").classList.remove("on");
+      if (!window.huevo) throw new Error("Окно оплаты huEVO недоступно");
+      const res = await huevo.confirmPayment(intent_id);
+      if (res.status !== "succeeded") throw new Error(res.status === "cancelled" ? "Оплата отменена" : "Оплата не прошла");
+      // huEVO also calls the server back; checking here makes the coins appear right away
+      let credited = 0;
+      for (let i = 0; i < 5 && !credited; i++) { const r = await api("/api/deposit/check", { intent_id }); credited = r.credited || (r.status === "succeeded" ? -1 : 0); if (!credited) await sleep(1200); }
+      toast(`Пополнено на ${fmt(credited > 0 ? credited : afterFee(amount))} (комиссия 5%)${res.test ? " · тест" : ""}`);
+    }
+    $("cashModal").classList.remove("on");
+  } catch (e) { toast(e.message, true); }
+  $("cashOk").disabled = false;
+};
+$("depositBtn").onclick = () => openCash("deposit");
+$("withdrawBtn").onclick = () => openCash("withdraw");
 
 /* ---------- mines ---------- */
-// 25 slabs, N of them hide a knife. Each safe slab raises the multiplier;
-// the fair multiplier for k safe picks is prod (25-i)/(25-N-i), minus a 3% house edge.
+// 25 slabs, N of them hide a bloody sword. Each safe slab raises the multiplier;
+// the fair multiplier for k safe picks is prod (25-i)/(25-N-i), minus a 10% house edge.
 const MINE_TILES = 25;
-const MINE_EDGE = 0.97;
+const MINE_EDGE = 0.90;
 const mines = { bet: 40, count: 3, active: false, knives: new Set(), opened: new Set(), boom: -1, revealed: false };
 
 function minesMultiplier(picks, count) {
@@ -1644,6 +1974,7 @@ function drawTile(i) {
   el.className = "tile";
   if (!open) { el.classList.add("closed"); el.innerHTML = `<img src="${SPR.cross}" alt="">`; }
   else if (isKnife) { el.classList.add("open"); if (i === mines.boom) el.classList.add("boom"); else if (mines.revealed) el.classList.add("dim"); el.innerHTML = `<img src="${SPR.knife}" alt="">`; }
+  else if (!mines.opened.has(i) && !mines.knives.size) { el.classList.add("closed", "dim"); el.innerHTML = `<img src="${SPR.cross}" alt="">`; }
   else { el.classList.add("open", "safe"); if (!mines.opened.has(i)) el.classList.add("dim"); el.innerHTML = `<img src="${SPR.poodle}" alt="">`; }
   el.disabled = !mines.active || mines.opened.has(i);
 }
@@ -1671,35 +2002,51 @@ function updateMines() {
   }
   for (let i = 0; i < MINE_TILES; i++) drawTile(i);
 }
-function startMines() {
-  const bet = mines.bet = clampBet(mines.bet);
-  if (!Wallet.bet(bet)) { $("mNext").textContent = "Не хватает монэток на ставку"; return; }
-  mines.knives = new Set();
-  while (mines.knives.size < mines.count) mines.knives.add(Math.floor(rnd() * MINE_TILES));
-  mines.opened = new Set(); mines.boom = -1; mines.revealed = false; mines.active = true;
+// The server hides the swords; the page only learns where they were when the round ends.
+async function startMines() {
+  if (mines.pending) return;
+  mines.bet = clampBet(mines.bet);
+  mines.pending = true;
+  try { await api("/api/mines/start", { bet: mines.bet, count: mines.count }); }
+  catch (e) { mines.pending = false; $("mNext").textContent = e.message; return; }
+  mines.pending = false;
+  mines.knives = new Set(); mines.opened = new Set(); mines.boom = -1; mines.revealed = false; mines.active = true;
   updateMines(); updateHud();
 }
-function cashOut() {
-  const win = mines.bet * minesMultiplier(mines.opened.size, mines.count);
-  Wallet.win(win);
-  pushWin({ name: "Ты", you: true, game: "Mines", amount: win, mult: minesMultiplier(mines.opened.size, mines.count) });
-  Sfx.play("coin");
+function endMines(r) {
+  mines.knives = new Set(r.swords || []); mines.opened = new Set(r.opened || []);
   mines.active = false; mines.revealed = true;
-  updateMines(); updateHud();
-  $("mNext").textContent = `Забрал ${fmt(win)} (${fmtMult(minesMultiplier(mines.opened.size, mines.count))})`;
 }
-function openTile(i) {
-  if (!mines.active || mines.opened.has(i)) return;
-  if (mines.knives.has(i)) {
-    mines.boom = i; mines.active = false; mines.revealed = true;
+async function cashOut() {
+  if (mines.pending) return;
+  mines.pending = true;
+  let r;
+  try { r = await api("/api/mines/cashout", {}); } catch (e) { mines.pending = false; $("mNext").textContent = e.message; return; }
+  mines.pending = false;
+  showMinesWin(r);
+}
+function showMinesWin(r) {
+  endMines(r);
+  Sfx.play("coin");
+  updateMines(); updateHud();
+  $("mNext").textContent = `Забрал ${fmt(r.win)} (${fmtMult(r.mult)})`;
+}
+async function openTile(i) {
+  if (!mines.active || mines.opened.has(i) || mines.pending) return;
+  mines.pending = true;
+  let r;
+  try { r = await api("/api/mines/open", { i }); } catch (e) { mines.pending = false; $("mNext").textContent = e.message; return; }
+  mines.pending = false;
+  if (r.boom !== undefined) {
+    endMines(r); mines.boom = r.boom;
     Sfx.play("boom");
     updateMines(); updateHud();
-    $("mNext").textContent = "Нож! Ставка сгорела";
+    $("mNext").textContent = "Меч! Ставка сгорела";
     return;
   }
-  mines.opened.add(i);
+  if (r.cashed) { Sfx.play("safe"); return showMinesWin(r); }   // every safe slab opened: paid out automatically
+  mines.opened = new Set(r.opened);
   Sfx.play("safe");
-  if (mines.opened.size === MINE_TILES - mines.count) return cashOut();
   updateMines();
 }
 $("mGo").onclick = () => (mines.active ? cashOut() : startMines());
@@ -1708,7 +2055,7 @@ $("mCountDown").onclick = () => { mines.count = Math.max(1, mines.count - 1); mi
 $("mCountUp").onclick = () => { mines.count = Math.min(24, mines.count + 1); mines.revealed = false; updateMines(); };
 
 /* ---------- blackjack ---------- */
-// 6-deck shoe, dealer stands on soft 17, blackjack pays 3:2, double on any first two cards (also after a split).
+// 6-deck shoe, dealer stands on soft 17, blackjack pays 6:5, double on any first two cards (also after a split).
 // Split any pair of equal value up to 4 hands; split aces get one card each and can't be re-split. No insurance.
 const SUITS = [["♠", false], ["♥", true], ["♦", true], ["♣", false]];
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -1716,13 +2063,7 @@ const MAX_HANDS = 4;
 const bj = { bet: 40, shoe: [], hands: [], active: 0, dealer: [], phase: "idle", outcome: "", outcomeClass: "" };
 const newHand = (cards, stake, fromSplit = false) => ({ cards, stake, fromSplit, splitAces: false, done: false, result: "" });
 
-function newShoe() {
-  const shoe = [];
-  for (let d = 0; d < 6; d++) for (const [s, red] of SUITS) for (const r of RANKS) shoe.push({ r, s, red });
-  for (let i = shoe.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [shoe[i], shoe[j]] = [shoe[j], shoe[i]]; }
-  return shoe;
-}
-function draw() { if (bj.shoe.length < 60) bj.shoe = newShoe(); Sfx.play("card"); return bj.shoe.pop(); }
+// The shoe and every card are dealt by the server; the hole card stays there until the dealer plays.
 function handValue(hand) {
   let total = 0, aces = 0;
   for (const c of hand) {
@@ -1735,7 +2076,7 @@ function handValue(hand) {
 const isBlackjack = (hand) => hand.length === 2 && handValue(hand).total === 21;
 
 function cardHtml(c, hidden, fresh) {
-  if (hidden) return `<div class="pcard back ${fresh ? "new" : ""}"></div>`;
+  if (hidden || !c) return `<div class="pcard back ${fresh ? "new" : ""}"></div>`;
   return `<div class="pcard ${c.red ? "red" : ""} ${fresh ? "new" : ""}"><span class="r">${c.r}</span><span class="s">${c.s}</span><span class="rb">${c.r}</span></div>`;
 }
 const cardPoints = (c) => (c.r === "A" ? 11 : ["10", "J", "Q", "K"].includes(c.r) ? 10 : Number(c.r));
@@ -1756,20 +2097,20 @@ function renderBJ() {
   const mark = { win: " ✓", bj: " ✓", push: " =", lose: " ✗" };
   $("bjPlayer").innerHTML = bj.hands.map((h, hi) => {
     const cards = h.cards.map((c, i) => cardHtml(c, false, i >= (bjShown.hands[hi] ?? 0))).join("");
-    const label = `${multi ? "Рука " + (hi + 1) : "Ты"} · ${handValue(h.cards).total}${h.result ? mark[h.result] : ""}`;
+    const label = `${multi ? "Рука " + (hi + 1) : "Ты"} · ${h.total ?? handValue(h.cards).total}${h.result ? mark[h.result] : ""}`;
     const active = multi && bj.phase === "player" && hi === bj.active;
     return `<div class="hwrap ${active ? "active" : ""}"><div class="hand">${cards}</div><div class="hand-label">${label}</div></div>`;
   }).join("") || `<div class="hwrap"><div class="hand"></div><div class="hand-label">Ты</div></div>`;
   bjShown.hands = bj.hands.map((h) => h.cards.length); bjShown.dealer = bj.dealer.length; bjShown.hole = hideHole || !bj.dealer.length;
   document.querySelector("#bj .table").classList.toggle("many", bj.hands.length > 2);
-  const dv = hideHole ? handValue(bj.dealer.slice(0, 1)).total : handValue(bj.dealer).total;
+  const dv = bj.dealerTotal ?? 0;
   $("bjDealerLabel").textContent = bj.dealer.length ? `Дилер · ${dv}` : "Дилер";
   $("bjBal").textContent = fmt(Wallet.get());
   const staked = bj.hands.reduce((a, h) => a + h.stake, 0);
   const inHand = bj.phase === "player" || bj.phase === "dealer";
   showBet("bjBet", staked && inHand ? staked : bj.bet, inHand);
-  const playing = bj.phase === "player" && !!activeHand() && !activeHand().done;
-  const busy = bj.phase === "player" || bj.phase === "dealer";
+  const playing = bj.phase === "player" && !!activeHand() && !activeHand().done && !bj.pending;
+  const busy = bj.phase === "player" || bj.phase === "dealer" || bj.pending;
   $("bjDeal").disabled = busy;
   $("bjHit").disabled = !playing;
   $("bjStand").disabled = !playing;
@@ -1782,24 +2123,18 @@ function renderBJ() {
   $("bjOut").className = "outcome " + bj.outcomeClass;
 }
 
-function finishRound() {
-  const d = handValue(bj.dealer).total;
-  const dealerBJ = isBlackjack(bj.dealer);
-  let paid = 0, staked = 0;
-  for (const h of bj.hands) {
-    const p = handValue(h.cards).total;
-    const natural = !h.fromSplit && bj.hands.length === 1 && isBlackjack(h.cards);
-    if (p > 21) h.result = "lose";
-    else if (natural && !dealerBJ) h.result = "bj";
-    else if (dealerBJ) h.result = natural ? "push" : "lose";
-    else if (d > 21 || p > d) h.result = "win";
-    else h.result = p === d ? "push" : "lose";
-    const pay = { bj: h.stake * 2.5, win: h.stake * 2, push: h.stake, lose: 0 }[h.result];
-    Wallet.win(pay);
-    paid += pay; staked += h.stake;
-  }
-  const net = paid - staked;
-  if (net > 0) pushWin({ name: "Ты", you: true, game: "Blackjack", amount: paid });
+// Apply a table state from the server; cards that weren't there before animate in (renderBJ).
+function applyBJ(s) {
+  const before = bj.hands.reduce((a, h) => a + h.cards.length, 0) + bj.dealer.filter(Boolean).length;
+  bj.hands = s.hands; bj.dealer = s.dealer; bj.active = s.active; bj.dealerTotal = s.dealerTotal;
+  bj.phase = s.phase === "done" ? "done" : "player";
+  const after = bj.hands.reduce((a, h) => a + h.cards.length, 0) + bj.dealer.filter(Boolean).length;
+  if (after > before) Sfx.play("card");
+  if (s.phase === "done") finishRound(s.outcome);
+  else renderBJ();
+}
+function finishRound(o) {
+  const paid = o.paid, net = o.net;
   if (net !== 0) Sfx.play(net > 0 ? "win" : "lose");
   if (bj.hands.length === 1) {
     const r = bj.hands[0].result;
@@ -1812,78 +2147,22 @@ function finishRound() {
   bj.phase = "done";
   renderBJ(); updateHud(); updateMines();
 }
-async function dealerPlay() {
-  bj.phase = "dealer";
-  renderBJ();
-  await sleep(300);
-  // Dealer only draws if at least one player hand is still alive.
-  if (bj.hands.some((h) => handValue(h.cards).total <= 21)) {
-    while (handValue(bj.dealer).total < 17) {
-      bj.dealer.push(draw());
-      renderBJ();
-      await sleep(320);
-    }
-  }
-  finishRound();
-}
-// Move to the next unfinished hand, or let the dealer play.
-function nextHand() {
-  const i = bj.hands.findIndex((h) => !h.done);
-  if (i === -1) return dealerPlay();
-  bj.active = i;
-  const h = activeHand();
-  if (h.cards.length === 1) h.cards.push(draw());              // second card for a freshly split hand
-  if (h.splitAces || handValue(h.cards).total === 21) { h.done = true; renderBJ(); return setTimeout(nextHand, 220); }
-  renderBJ();
+async function bjCall(path, body) {
+  if (bj.pending) return;
+  bj.pending = true; renderBJ();
+  try { const s = await api(path, body); bj.pending = false; applyBJ(s); }
+  catch (e) { bj.pending = false; bj.outcome = e.message; bj.outcomeClass = "lose"; renderBJ(); }
 }
 function dealBJ() {
-  const bet = bj.bet = clampBet(bj.bet);
-  if (!Wallet.bet(bet)) { bj.outcome = "Не хватает монэток на ставку"; bj.outcomeClass = "lose"; renderBJ(); return; }
+  bj.bet = clampBet(bj.bet);
   bj.outcome = ""; bj.outcomeClass = "";
-  bj.hands = [newHand([draw(), draw()], bet)];
-  bj.dealer = [draw(), draw()];
-  bj.active = 0;
-  bj.phase = "player";
-  bjShown.hands = [];
-  renderBJ(); updateHud();
-  if (isBlackjack(bj.hands[0].cards) || isBlackjack(bj.dealer)) { bj.phase = "dealer"; renderBJ(); setTimeout(finishRound, 350); }
+  bj.hands = []; bj.dealer = []; bjShown.hands = []; bjShown.dealer = 0;
+  bjCall("/api/bj/deal", { bet: bj.bet });
 }
-function hitBJ() {
-  const h = activeHand();
-  if (bj.phase !== "player" || h.done) return;
-  h.cards.push(draw());
-  const v = handValue(h.cards).total;
-  if (v >= 21) { h.done = true; renderBJ(); setTimeout(nextHand, 220); }
-  else renderBJ();
-}
-function standBJ() {
-  if (bj.phase !== "player" || activeHand().done) return;
-  activeHand().done = true;
-  nextHand();
-}
-function doubleBJ() {
-  const h = activeHand();
-  if (!canDouble(h) || !Wallet.bet(h.stake)) return;
-  h.stake *= 2;
-  h.cards.push(draw());
-  h.done = true;
-  updateHud(); renderBJ();
-  setTimeout(nextHand, 220);
-}
-function splitBJ() {
-  const h = activeHand();
-  if (!canSplit(h) || !Wallet.bet(h.stake)) return;
-  const second = h.cards.pop();
-  const twin = newHand([second], h.stake, true);
-  h.fromSplit = true;
-  if (h.cards[0].r === "A") { h.splitAces = true; twin.splitAces = true; }
-  bj.hands.splice(bj.active + 1, 0, twin);
-  bjShown.hands.splice(bj.active + 1, 0, 1);
-  h.cards.push(draw());
-  updateHud();
-  if (h.splitAces || handValue(h.cards).total === 21) { h.done = true; renderBJ(); setTimeout(nextHand, 220); }
-  else renderBJ();
-}
+const hitBJ = () => bjCall("/api/bj/action", { action: "hit" });
+const standBJ = () => bjCall("/api/bj/action", { action: "stand" });
+const doubleBJ = () => canDouble(activeHand()) && bjCall("/api/bj/action", { action: "double" });
+const splitBJ = () => canSplit(activeHand()) && bjCall("/api/bj/action", { action: "split" });
 $("bjDeal").onclick = dealBJ;
 $("bjHit").onclick = hitBJ;
 $("bjStand").onclick = standBJ;
@@ -1893,82 +2172,70 @@ bindBet("bjBet", "bjBetDown", "bjBetUp", bj, renderBJ);
 
 /* ---------- crash ---------- */
 // A bat climbs while the multiplier grows as e^(k·t) and drops at a random crash point.
-// P(point >= x) = 0.97 / x, so every cash-out strategy returns ~97%.
-const CRASH_EDGE = 0.97, CRASH_K = 0.14;
+// P(point >= x) = 0.90 / x, so every cash-out strategy returns ~90%.
+const CRASH_EDGE = 0.90, CRASH_K = 0.14;
 const CRASH_AUTO = [0, 1.2, 1.5, 2, 3, 5, 10, 25, 100];
 const CW = 192, CH = 108;
 const BAT = {
   up:   ["#.........#", "##.......##", "###.....###", ".####.####.", "...#r#r#...", "....###....", "....#.#...."],
   down: ["...........", "....#.#....", "...#r#r#...", ".#########.", "###.....###", "##.......##", "#.........#"],
 };
-const CRASH_BET_SEC = 6, CRASH_PAUSE_SEC = 3, CRASH_MAX = 1000;
-const crash = { bet: 40, auto: 0, phase: "bet", roundId: "", sec: 0, point: 1, m: 1, el: 0, fallAt: 0, hist: [], players: [],
-  my: null, queued: false };
+const CRASH_BET_SEC = 6;
+const crash = { bet: 40, auto: 0, phase: "bet", roundId: 0, sec: 0, point: 1, m: 1, el: 0, fallAt: 0, hist: [], players: [],
+  queued: false, offset: 0, betEnds: 0, flyStart: 0 };
 
-/* Shared rounds. Every browser derives the same round schedule from the wall clock: rounds run back
-   to back from 00:00 UTC, and each round's crash point comes from a seeded RNG keyed by (day, round).
-   So everyone sees the same round at the same moment without a server. This is fine for test coins
-   only: the schedule is computable in advance from this code. Real coins need a game server that
-   draws crash points secretly (and publishes them after each round). */
-function seeded(seed) {
-  return () => {
-    seed = (seed + 0x6D2B79F5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const roundRng = (day, n) => seeded(day * 100003 + n * 7919 + 17);
-const toPoint = (r) => Math.min(CRASH_MAX, Math.max(1, Math.floor(CRASH_EDGE / (1 - r) * 100) / 100));
-const roundPoint = (day, n) => toPoint(roundRng(day, n)());
-const roundLen = (p) => (CRASH_BET_SEC + Math.log(p) / CRASH_K + CRASH_PAUSE_SEC) * 1000;
-const roundCursor = { day: -1, n: 0, start: 0 };
-function roundAt(t) {
-  const day = Math.floor(t / 864e5);
-  if (roundCursor.day !== day || t < roundCursor.start) Object.assign(roundCursor, { day, n: 0, start: day * 864e5 });
-  for (;;) {
-    const point = roundPoint(day, roundCursor.n), len = roundLen(point);
-    if (t < roundCursor.start + len) return { id: day + ":" + roundCursor.n, day, n: roundCursor.n, start: roundCursor.start, point };
-    roundCursor.start += len; roundCursor.n++;
+/* Shared rounds run on the game server: it draws each crash point in secret and reveals it only when
+   the bat falls, takes the bets and pays the cash-outs. The page times the flight from the server clock. */
+const myCrash = () => crash.players.find((p) => p.you);
+function crashOnState(m, localAt) {
+  crash.offset = m.now - (localAt || Date.now());
+  const prev = crash.phase, newRound = m.id !== crash.roundId, meBefore = myCrash();
+  Object.assign(crash, { roundId: m.id, phase: m.phase, betEnds: m.betEnds, flyStart: m.flyStart, hist: m.hist || [], queued: !!m.queued });
+  if (m.point) crash.point = m.point;
+  crash.players = (m.players || []).map((p) => ({ ...p, you: !!Net.user && p.id === Net.user.id }));
+  // a cash-out this page just made is not undone by a poll that left before it
+  if (meBefore && meBefore.cashed && myCrash() && !myCrash().cashed && !newRound) myCrash().cashed = meBefore.cashed;
+  const me = myCrash();
+  if (newRound) {
+    if (me) crashMsg("Ставка принята. Забери выигрыш, пока мышь летит");
+    else if (!crash.queued) crashMsg("Делайте ставки");
+  }
+  if (me && me.cashed && !(meBefore && meBefore.cashed)) {
+    crashMsg(`Забрал ${fmt(Math.floor(me.bet * me.cashed))} на x${me.cashed.toFixed(2)}`);
+    Sfx.play("coin");
+  }
+  if (crash.phase === "fly" && prev === "bet") crashLaunchSound();
+  if (crash.phase === "crashed" && prev !== "crashed") {
+    crash.fallAt = performance.now();
+    if (view === "crash" || (me && !me.cashed)) Sfx.play("boom");
+    crashMsg(me && !me.cashed ? `Мышь сбита на x${crash.point.toFixed(2)}. Ставка сгорела` : `Мышь сбита на x${crash.point.toFixed(2)}`);
   }
 }
-
-// Demo players: there is no server yet, so other seats are bots, always tagged "бот" in the UI.
-// They are seeded by the round too, so every viewer sees the same bots. Replace makeBots() with the
-// real round roster once a game server exists.
-const BOT_NAMES = ["Ворон", "Граф Орлок", "Сестра Агата", "Звонарь", "Могильщик", "Лорд Блэквуд", "Призрак", "Аббат",
-  "Ведьма Мора", "Кардинал", "Нетопырь", "Сова", "Пилигрим", "Гаргулья", "Монах Тихон", "Лилит"];
-const BOT_TARGETS = [[1.2, 14], [1.5, 18], [1.8, 12], [2, 16], [2.5, 9], [3, 8], [5, 5], [10, 3], [25, 1]];
-function makeBots(day, n) {
-  const r = roundRng(day, n); r();                    // first draw is the crash point
-  const names = [...BOT_NAMES].map((nm) => [nm, r()]).sort((a, b) => a[1] - b[1]).slice(0, 5 + Math.floor(r() * 7));
-  return names.map(([name]) => ({ name, bot: true, joinAt: r() * (CRASH_BET_SEC - 0.5),
-    bet: BETS[weighted([[0, 30], [1, 25], [2, 20], [3, 12], [4, 8], [5, 4], [6, 1]], r)], target: weighted(BOT_TARGETS, r), cashed: 0 }));
-}
 function renderPlayers() {
-  const ps = crash.players.filter((p) => !p.bot || crash.phase !== "bet" || p.joinAt <= crash.el);
+  const ps = crash.players;
   $("cCount").textContent = ps.length;
   $("cTotal").textContent = fmt(ps.reduce((a, p) => a + p.bet, 0));
   const over = crash.phase === "crashed";
   $("cList").innerHTML = ps.length ? ps.map((p) => {
     const state = p.cashed ? "won" : over ? "lost" : "";
-    const status = p.cashed ? `x${p.cashed.toFixed(2)} · +${fmt(p.bet * p.cashed)}` : over ? "сбит" : crash.phase === "bet" ? "ставка" : "в полёте";
-    return `<div class="prow ${p.you ? "you" : ""} ${state}"><span class="pn">${p.bot ? '<span class="tagbot">бот</span>' : ""}${p.name}</span>` +
+    const status = p.cashed ? `x${p.cashed.toFixed(2)} · +${fmt(Math.floor(p.bet * p.cashed))}` : over ? "сбит" : crash.phase === "bet" ? "ставка" : "в полёте";
+    return `<div class="prow ${p.you ? "you" : ""} ${state}"><span class="pn">${escapeHtml(p.name)}</span>` +
       `<span class="pb">${fmt(p.bet)}</span><span class="ps">${status}</span></div>`;
   }).join("") : `<div class="prow"><span class="ps">Ждём ставок</span></div>`;
 }
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* Site-wide wins ticker: every game reports its wins here. */
+/* Site-wide wins ticker: the server sends every player's real wins. */
 const tickerWins = [];
 function pushWin(w) {
-  tickerWins.unshift({ ...w, fresh: true });
+  const you = !!Net.user && w.name === Net.user.name;
+  tickerWins.unshift({ ...w, you, fresh: true });
   tickerWins.length = Math.min(tickerWins.length, 20);
   $("ticker").innerHTML = tickerWins.map((t) =>
-    `<span class="${t.you ? "you" : ""} ${t.fresh ? "new" : ""}">${t.bot ? '<span class="tagbot">бот</span>' : ""}${t.name} · <i>${t.game}</i> <b>+${fmt(t.amount)}</b>${t.mult ? " x" + t.mult.toFixed(2) : ""}</span>`).join("");
+    `<span class="${t.you ? "you" : ""} ${t.fresh ? "new" : ""}">${escapeHtml(t.name)} · <i>${t.game}</i> <b>+${fmt(t.amount)}</b>${t.mult ? " x" + t.mult.toFixed(2) : ""}</span>`).join("");
   tickerWins.forEach((t) => { t.fresh = false; });
 }
 const crashMult = (sec) => Math.exp(CRASH_K * sec);
-const crashPoint = () => toPoint(rnd());
 
 function drawBat(x, cx, cy, rows, flip, s = 2) {
   const left = Math.round(cx - rows[0].length * s / 2), top = Math.round(cy - rows.length * s / 2);
@@ -2072,15 +2339,15 @@ function drawCrash(now) {
     if (t < 0.6) { x.fillStyle = `rgba(170,20,20,${0.35 * (1 - t / 0.6)})`; x.fillRect(0, 0, CW, CH); }
   } else drawBat(x, BX, by, BAT.down, false, 3);
 }
-const myLive = () => crash.my && crash.my.roundId === crash.roundId && !crash.my.cashed && crash.phase !== "crashed";
+const myLive = () => { const me = myCrash(); return !!me && !me.cashed && crash.phase !== "crashed"; };
 function renderCrash() {
-  const live = myLive(), inRound = crash.my && crash.my.roundId === crash.roundId;
+  const me = myCrash(), live = myLive();
   $("cBal").textContent = fmt(Wallet.get());
   showBet("cBet", crash.bet, live || crash.queued);
   $("cAuto").textContent = CRASH_AUTO[crash.auto] ? "x" + CRASH_AUTO[crash.auto] : "Выкл";
   const lock = live || crash.queued;
   for (const id of ["cBetDown", "cBetUp", "cAutoDown", "cAutoUp"]) $(id).disabled = lock;
-  $("backCrash").disabled = live && crash.phase === "fly";
+  $("backCrash").disabled = false;      // the round keeps going on the server; auto cash-out still works
   $("cBetDown").disabled ||= crash.bet <= BET_MIN;
   $("cBetUp").disabled ||= crash.bet >= BET_MAX;
   $("cAutoDown").disabled ||= crash.auto === 0;
@@ -2088,10 +2355,10 @@ function renderCrash() {
   const go = $("cGo");
   const cashable = live && crash.phase === "fly";
   go.classList.toggle("cash", cashable);
-  go.disabled = (crash.phase === "bet" && inRound) || (inRound && crash.my.cashed && crash.phase === "fly");
-  go.textContent = cashable ? `Забрать ${fmt(crash.my.bet * crash.m)}`
-    : crash.phase === "bet" ? (inRound ? "Ставка принята" : `Поставить ${fmt(clampBet(crash.bet))}`)
-    : inRound && crash.my.cashed && crash.phase === "fly" ? "Забрано"
+  go.disabled = (crash.phase === "bet" && !!me) || (!!me && me.cashed && crash.phase === "fly") || !Net.live || !!crash.pending;
+  go.textContent = cashable ? `Забрать ${fmt(Math.floor(me.bet * crash.m))}`
+    : crash.phase === "bet" ? (me ? "Ставка принята" : `Поставить ${fmt(clampBet(crash.bet))}`)
+    : me && me.cashed && crash.phase === "fly" ? "Забрано"
     : crash.queued ? "Отменить ставку" : "Ставка на следующий";
   const mult = $("crashMult");
   mult.textContent = crash.phase === "bet" ? `Старт ${Math.max(0, CRASH_BET_SEC - crash.el).toFixed(1)}`
@@ -2100,112 +2367,50 @@ function renderCrash() {
   $("crashHist").innerHTML = crash.hist.map((p) => `<span class="${p >= 2 ? "hi" : p < 1.2 ? "lo" : ""}">x${p.toFixed(2)}</span>`).join("");
 }
 function crashMsg(text) { $("cNext").textContent = text; }
-function placeCrashBet() {
-  const bet = crash.bet = clampBet(crash.bet);
-  if (!Wallet.bet(bet)) { crashMsg("Не хватает монэток на ставку"); crash.queued = false; return; }
-  crash.my = { roundId: crash.roundId, bet, cashed: 0 };
-  crash.players = [{ name: "Ты", you: true, bet, cashed: 0 }, ...crash.players.filter((p) => !p.you)];
-  crashMsg("Ставка принята. Забери выигрыш, пока мышь летит");
-  updateHud();
+function crashLaunchSound() {
+  if (view !== "crash" || crash.launched === crash.roundId) return;
+  crash.launched = crash.roundId;
+  Sfx.play("launch");
 }
-function cashOutCrash(mult) {
-  if (!myLive() || crash.phase !== "fly") return;
-  const at = mult ?? Math.floor(crash.m * 100) / 100;
-  crash.my.cashed = at;
-  Wallet.win(crash.my.bet * at);
-  crashMsg(`Забрал ${fmt(crash.my.bet * at)} на x${at.toFixed(2)}`);
-  const you = crash.players.find((p) => p.you);
-  if (you) you.cashed = at;
-  pushWin({ name: "Ты", you: true, game: "Crash", amount: crash.my.bet * at, mult: at });
-  Sfx.play("coin");
-  updateHud();
-}
-function newCrashRound(r) {
-  crash.roundId = r.id;
-  crash.players = makeBots(r.day, r.n);
-  crash.hist = [];
-  for (let k = r.n - 1; k >= 0 && crash.hist.length < 8; k--) crash.hist.push(roundPoint(r.day, k));
-  if (crash.queued) { crash.queued = false; placeCrashBet(); }
-  else if (!crash.my || crash.my.roundId !== r.id) crashMsg("Делайте ставки");
-}
-// Runs all the time (not only on the crash screen) so bot wins reach the ticker from any game.
+// Local clock for the animation, corrected by the server's clock offset.
 function crashTick() {
-  const now = Date.now(), r = roundAt(now);
-  if (r.id !== crash.roundId) newCrashRound(r);
-  const el = (now - r.start) / 1000, tc = Math.log(r.point) / CRASH_K, prev = crash.phase;
-  crash.el = el; crash.point = r.point;
-  if (el < CRASH_BET_SEC) { crash.phase = "bet"; crash.sec = 0; crash.m = 1; }
-  else if (el - CRASH_BET_SEC < tc) { crash.phase = "fly"; crash.sec = el - CRASH_BET_SEC; crash.m = crashMult(crash.sec); }
-  else { crash.phase = "crashed"; crash.sec = tc; crash.m = r.point; }
-  if (crash.phase !== "bet") {
-    const auto = CRASH_AUTO[crash.auto];
-    if (myLive() && auto && auto < r.point && crash.m >= auto) cashOutCrash(auto);
-    for (const p of crash.players) {
-      if (p.bot && !p.cashed && p.target < r.point && crash.m >= p.target) {
-        p.cashed = p.target;
-        // small crash cash-outs come in bursts and would crowd other games out of the ticker
-        if (p.target >= 1.8) pushWin({ name: p.name, bot: true, game: "Crash", amount: p.bet * p.target, mult: p.target });
-      }
-    }
+  const now = Date.now() + crash.offset;
+  // the bets close on the clock; the next poll confirms the flight
+  if (crash.phase === "bet" && crash.betEnds && now >= crash.betEnds) {
+    crash.phase = "fly";
+    crashLaunchSound();
   }
-  if (crash.phase === "fly" && prev === "bet" && view === "crash") Sfx.play("launch");
-  if (crash.phase === "crashed" && prev !== "crashed") {
-    if (view === "crash" || (crash.my && crash.my.roundId === r.id && !crash.my.cashed)) Sfx.play("boom");
-    crash.fallAt = performance.now() - (el - CRASH_BET_SEC - tc) * 1000;
-    if (crash.my && crash.my.roundId === r.id && !crash.my.cashed) crashMsg(`Мышь сбита на x${r.point.toFixed(2)}. Ставка сгорела`);
-    else if (!crash.my || crash.my.roundId !== r.id) crashMsg(`Мышь сбита на x${r.point.toFixed(2)}`);
-  }
+  if (crash.phase === "bet") { crash.el = CRASH_BET_SEC - (crash.betEnds - now) / 1000; crash.sec = 0; crash.m = 1; }
+  else if (crash.phase === "fly") { crash.sec = Math.max(0, (now - crash.flyStart) / 1000); crash.m = crashMult(crash.sec); }
+  else { crash.sec = Math.log(crash.point) / CRASH_K; crash.m = crash.point; }
 }
 function crashFrame(now) {
   crashTick();
   if (view === "crash") { renderCrash(); renderPlayers(); drawCrash(now); }
   requestAnimationFrame(crashFrame);
 }
-setInterval(crashTick, 200);   // keeps rounds going off-screen and in background tabs, where rAF stalls
-
-// Bot wins from the other games. Like crash rounds, they're seeded by the wall clock (one chance
-// every 3.5 s), so every viewer sees the same feed. Tagged "бот"; replace with real wins from a server.
-const BOT_BET = [[0, 30], [1, 25], [2, 20], [3, 12], [4, 8], [5, 4], [6, 1]];
-let botWinSlot = Math.floor(Date.now() / 3500) - 10;   // start with the last ~35 s so the ticker isn't empty
-function botWinFor(slot) {
-  const r = seeded(slot * 31 + 5);
-  if (r() > 0.75) return null;
-  const name = BOT_NAMES[Math.floor(r() * BOT_NAMES.length)], bet = BETS[weighted(BOT_BET, r)], g = r();
-  if (g < 0.36) {
-    const mult = weighted([[1.5, 20], [2, 25], [3, 18], [5, 14], [10, 10], [25, 6], [60, 3], [150, 1]], r);
-    return { name, bot: true, game: "Slots", amount: bet * mult, mult };
-  }
-  if (g < 0.4) {
-    const c = COFFINS[weighted([[0, 40], [1, 30], [2, 18], [3, 9], [4, 3]], r)];
-    const l = weighted(LOOT.filter((x) => x.m > 1).map((x) => [x, x.w]), r);
-    return { name, bot: true, game: "Coffins", amount: lootPay(l, c.price), mult: l.m * LOOT_K };
-  }
-  if (g < 0.47) {
-    const stake = Math.min(UPG_MAX, bet * 5), mult = weighted([[1.5, 20], [2, 30], [3, 20], [5, 14], [10, 8], [20, 4], [50, 2], [100, 1]], r);
-    return { name, bot: true, game: "Upgrader", amount: stake * mult, mult };
-  }
-  if (g < 0.56) {
-    const stake = DUEL_STAKES[weighted([[0, 35], [1, 30], [2, 20], [3, 10], [4, 4], [5, 1]], r)];
-    return { name, bot: true, game: "Duel", amount: stake * 2 * (1 - DUEL_FEE) };
-  }
-  if (g < 0.78) {
-    const count = 1 + Math.floor(r() * 10), picks = Math.min(1 + Math.floor(r() * 8), MINE_TILES - count);
-    const mult = minesMultiplier(picks, count);
-    return { name, bot: true, game: "Mines", amount: bet * mult, mult };
-  }
-  const mult = r() < 0.12 ? 2.5 : 2;
-  return { name, bot: true, game: "Blackjack", amount: bet * mult, mult };
-}
-setInterval(() => {
-  const slot = Math.floor(Date.now() / 3500);
-  botWinSlot = Math.max(botWinSlot, slot - 10);      // after a long sleep, don't flood the ticker
-  for (; botWinSlot < slot; botWinSlot++) { const w = botWinFor(botWinSlot + 1); if (w) pushWin(w); }
-}, 500);
-$("cGo").onclick = () => {
-  if (myLive() && crash.phase === "fly") return cashOutCrash();
-  if (crash.phase === "bet") { if (!crash.my || crash.my.roundId !== crash.roundId) placeCrashBet(); return; }
-  crash.queued = !crash.queued;
-  crashMsg(crash.queued ? "Ставка будет сделана в следующем раунде" : "Ставка отменена");
+$("cGo").onclick = async () => {
+  if (crash.pending) return;
+  const me = myCrash();
+  if (me && !(myLive() && crash.phase === "fly")) return;
+  crash.pending = true;
+  try {
+    if (me) {
+      const r = await api("/api/crash/cash", {});
+      me.cashed = r.cashed;
+      crashMsg(`Забрал ${fmt(r.win)} на x${r.cashed.toFixed(2)}`);
+      Sfx.play("coin");
+    } else if (crash.queued) {
+      await api("/api/crash/unqueue", {});
+      crash.queued = false; crashMsg("Ставка отменена");
+    } else {
+      crash.bet = clampBet(crash.bet);
+      const r = await api("/api/crash/bet", { bet: crash.bet, auto: CRASH_AUTO[crash.auto] });   // during a flight it goes to the next round
+      if (r.queued) { crash.queued = true; crashMsg("Ставка будет сделана в следующем раунде"); }
+      else crashMsg("Ставка принята. Забери выигрыш, пока мышь летит");
+    }
+  } catch (e) { crashMsg(e.message); }
+  finally { crash.pending = false; pollNow(); }
 };
 bindBet("cBet", "cBetDown", "cBetUp", crash, renderCrash);
 $("cAutoDown").onclick = () => { crash.auto = Math.max(0, crash.auto - 1); renderCrash(); };
@@ -2213,94 +2418,108 @@ $("cAutoUp").onclick = () => { crash.auto = Math.min(CRASH_AUTO.length - 1, cras
 $("doorCrash").onclick = () => show("crash");
 $("backCrash").onclick = () => show("hub");
 
-// Payout check for crash: return per bet when always cashing out at `target`.
-window.__simulateCrash = function (target = 2, rounds = 500000) {
-  let back = 0;
-  for (let i = 0; i < rounds; i++) if (crashPoint() >= target) back += target;
-  return +(back / rounds * 100).toFixed(2);
-};
-
 /* ---------- duel ---------- */
-// Two wanderers walk through the dark castle and a vampire takes one of them: exactly 50/50.
-// The survivor takes the pot of both stakes minus a 3% fee, so a win returns 1.94x the stake.
-// Opponents are bots (no server yet), always tagged "бот".
+// Two real players walk through the dark castle and a vampire takes one of them: exactly 50/50.
+// The survivor takes the pot of both stakes minus a 10% fee. Rooms, matching and the draw are on the
+// server: a player waits in a stake room until someone else walks in.
 const DUEL_STAKES = [100, 500, 1000, 5000, 25000, 95000];
-const DUEL_FEE = 0.03;
+const DUEL_FEE = 0.10;
 const DUEL_WALK = 2.8, DUEL_BITE = 3.9, DUEL_END = 4.6;      // scene timeline, seconds
-const duel = { rooms: [], phase: "hall", stake: 0, opp: "", youDie: false, t0: 0, resolved: false, hist: [], raf: 0 };
-const botName = () => BOT_NAMES[Math.floor(rnd() * BOT_NAMES.length)];
-duel.rooms = DUEL_STAKES.map((stake) => ({ stake, bot: rnd() < 0.6 ? botName() : null }));
-// bots come and go while the hall is open
-setInterval(() => {
-  if (duel.phase !== "hall") return;
-  const r = duel.rooms[Math.floor(rnd() * duel.rooms.length)];
-  r.bot = r.bot && rnd() < 0.5 ? null : botName();
-  if (view === "duel") renderRooms();
-}, 3500);
+const duel = { rooms: DUEL_STAKES.map((stake) => ({ stake, waiting: null, waitingId: null })), phase: "hall", stake: 0, opp: "",
+  youDie: false, prize: 0, t0: 0, resolved: false, hist: [], raf: 0 };
 
 function renderRooms() {
   $("dBal").textContent = fmt(Wallet.get());
-  $("duelRooms").innerHTML = duel.rooms.map((r, i) =>
-    `<div class="room ${r.bot ? "busy" : ""}"><i class="candle l"></i><i class="candle r"></i><div class="stake">${fmt(r.stake)}</div>` +
-    `<div class="who">${r.bot ? `<span class="tagbot">бот</span>${r.bot}<br>ждёт соперника` : "Зал пуст"}</div>` +
-    `<button data-room="${i}" ${Wallet.get() < r.stake ? "disabled" : ""}>${r.bot ? "Войти" : "Создать"}</button></div>`).join("");
+  $("duelRooms").innerHTML = duel.rooms.map((r, i) => {
+    const mine = !!Net.user && r.waitingId === Net.user.id;
+    return `<div class="room ${r.waiting ? "busy" : ""}"><i class="candle l"></i><i class="candle r"></i><div class="stake">${fmt(r.stake)}</div>` +
+      `<div class="who">${r.waiting ? `${escapeHtml(r.waiting)}<br>${mine ? "это ты" : "ждёт соперника"}` : "Зал пуст"}</div>` +
+      `<button data-room="${i}" ${Wallet.get() < r.stake || mine || duel.phase !== "hall" ? "disabled" : ""}>${r.waiting ? "Войти" : "Создать"}</button></div>`;
+  }).join("");
   $("dHist").innerHTML = duel.hist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : "−"}${fmt(Math.abs(h))}</span>`).join("");
-  $("backDuel").disabled = duel.phase === "walk" || duel.phase === "wait";
+  $("backDuel").disabled = duel.phase === "walk";
 }
-function enterDuel(stake, opp) {
-  if (!Wallet.bet(stake)) { $("dNext").textContent = "Не хватает монэток на ставку"; return false; }
-  updateHud();
-  Object.assign(duel, { stake, opp: opp || "", phase: opp ? "walk" : "wait", resolved: false, t0: performance.now() });
+function duelOnPoll(d, balance) {
+  duel.rooms = d.rooms;
+  // still listed in a room from an earlier visit: take the stake back
+  if (duel.phase === "hall" && !duel.pending && Net.user && d.rooms.some((r) => r.waitingId === Net.user.id)) {
+    api("/api/duel/leave", {}).catch(() => {});
+  }
+  for (const ev of d.events || []) {
+    if (duel.phase === "wait" && ev.stake === duel.stake) {
+      Net.holdUntil = Date.now() + 15000;       // the scene reveals the outcome first
+      duelOnMatch({ ...ev, balance });
+    } else toast(ev.youDie ? `Дуэль ${fmt(ev.stake)}: тебя забрал вампир` : `Дуэль ${fmt(ev.stake)}: ты выжил · +${fmt(ev.prize)}`, ev.youDie);
+  }
+  if (view === "duel") renderRooms();
+}
+function openArena(stake) {
   $("duel").classList.add("fighting");
   $("dRes").textContent = ""; $("dRes").className = "dres";
-  $("dAgain").disabled = $("dLeave").disabled = true;
-  $("dPot").textContent = `Банк ${fmt(stake * 2)} · выживший получит ${fmt(stake * 2 * (1 - DUEL_FEE))}`;
-  if (!opp) {
-    $("dNext").textContent = "Ждём соперника…";
-    setTimeout(() => { duel.opp = botName(); startWalk(); }, 1500 + rnd() * 2500);
-  } else startWalk();
+  $("dAgain").disabled = true; $("dLeave").disabled = false; $("dLeave").textContent = "Уйти";
+  $("dPot").textContent = `Банк ${fmt(stake * 2)} · выживший получит ${fmt(Math.floor(stake * 2 * (1 - DUEL_FEE)))}`;
+}
+async function enterDuel(stake) {
+  if (Wallet.get() < stake) { $("dNext").textContent = "Не хватает монэток на ставку"; return; }
+  if (duel.pending) return;
+  duel.pending = true; duel.stake = stake;
+  try {
+    const r = await api("/api/duel/join", { stake }, { keepBalance: true });
+    if (r.wait) { Wallet.set(r.balance); duelOnWait(r); }
+    else duelOnMatch({ ...r.match, balance: r.balance });
+  } catch (e) { $("dNext").textContent = e.message; }
+  finally { duel.pending = false; pollNow(); }
+}
+// nobody was in the room: wait alone at the entrance until a real opponent joins
+function duelOnWait(m) {
+  Object.assign(duel, { stake: m.stake, opp: "", phase: "wait", resolved: false, t0: performance.now() });
+  openArena(m.stake);
+  $("dNext").textContent = "Ждём соперника… Можно уйти, ставка вернётся";
   renderRooms();
   cancelAnimationFrame(duel.raf); duel.raf = requestAnimationFrame(duelFrame);
-  return true;
 }
-function startWalk() {
-  Object.assign(duel, { phase: "walk", t0: performance.now(), youDie: rnd() < 0.5, step: -1, dimmed: false, swooped: false });
-  $("dOppName").innerHTML = `<span class="tagbot">бот</span>${duel.opp}`;
+// matched: the server has already drawn who survives and paid the winner; the scene plays it out
+function duelOnMatch(m) {
+  Object.assign(duel, { stake: m.stake, opp: m.opp, prize: m.prize, pendingBalance: m.balance });
+  openArena(m.stake);
+  $("dLeave").disabled = true;
+  Object.assign(duel, { phase: "walk", t0: performance.now(), youDie: !!m.youDie, step: -1, dimmed: false, swooped: false, resolved: false });
+  $("dOppName").textContent = m.opp;
   $("dNext").textContent = "Тише… в замке кто-то есть";
   renderRooms();
+  cancelAnimationFrame(duel.raf); duel.raf = requestAnimationFrame(duelFrame);
 }
 function resolveDuel() {
   duel.resolved = true; duel.phase = "done";
-  const win = duel.stake * 2 * (1 - DUEL_FEE);
+  if (typeof duel.pendingBalance === "number") Wallet.set(duel.pendingBalance);
   if (!duel.youDie) {
-    Wallet.win(win);
-    pushWin({ name: "Ты", you: true, game: "Duel", amount: win, mult: 2 * (1 - DUEL_FEE) });
-    $("dRes").textContent = `Ты выжил · +${fmt(win)}`;
-    $("dNext").textContent = `Вампир забрал бота ${duel.opp}. Банк твой`;
-    duel.hist.unshift(win - duel.stake);
+    $("dRes").textContent = `Ты выжил · +${fmt(duel.prize)}`;
+    $("dNext").textContent = `Вампир забрал ${duel.opp}. Банк твой`;
+    duel.hist.unshift(duel.prize - duel.stake);
     Sfx.play("win");
   } else {
     $("dRes").textContent = "Тебя забрал вампир"; $("dRes").classList.add("lose");
-    $("dNext").textContent = `Бот ${duel.opp} выжил и унёс банк`;
+    $("dNext").textContent = `${duel.opp} выжил и унёс банк`;
     duel.hist.unshift(-duel.stake);
     Sfx.play("lose");
   }
   duel.hist.length = Math.min(duel.hist.length, 10);
   $("dAgain").disabled = Wallet.get() < duel.stake;
-  $("dLeave").disabled = false;
+  $("dLeave").disabled = false; $("dLeave").textContent = "К залам";
   updateHud(); renderRooms();
 }
 $("duelRooms").onclick = (e) => {
   const b = e.target.closest("button[data-room]");
-  if (!b) return;
-  const r = duel.rooms[+b.dataset.room];
-  const opp = r.bot;
-  if (enterDuel(r.stake, opp)) r.bot = null;
+  if (b) enterDuel(duel.rooms[+b.dataset.room].stake);
 };
-$("dAgain").onclick = () => enterDuel(duel.stake, rnd() < 0.5 ? botName() : null);
-$("dLeave").onclick = () => { duel.phase = "hall"; $("duel").classList.remove("fighting"); $("dNext").textContent = "Выбери зал"; renderRooms(); };
+$("dAgain").onclick = () => { duel.phase = "hall"; enterDuel(duel.stake); };
+$("dLeave").onclick = () => {
+  if (duel.phase === "wait") api("/api/duel/leave", {}).catch((e) => toast(e.message, true));     // the server refunds the stake
+  duel.phase = "hall"; cancelAnimationFrame(duel.raf);
+  $("duel").classList.remove("fighting"); $("dNext").textContent = "Выбери зал"; renderRooms();
+};
 $("doorDuel").onclick = () => show("duel");
-$("backDuel").onclick = () => show("hub");
+$("backDuel").onclick = () => { if (duel.phase === "wait") $("dLeave").onclick(); show("hub"); };
 
 // pixel art: wanderer (two walk frames) and the vampire
 const WANDERER = [
@@ -2395,10 +2614,10 @@ function duelFrame(now) {
 }
 
 /* ---------- upgrader ---------- */
-// Stake a sum and aim for x times more. Win chance = 0.97 / multiplier, drawn as the red arc on the dial.
+// Stake a sum and aim for x times more. Win chance = 0.90 / multiplier, drawn as the red arc on the dial.
 // The blade stops at a uniformly random angle, so the arc's share of the circle is exactly the chance.
 const UPG_MULTS = [1.2, 1.5, 2, 3, 5, 10, 20, 50, 100];
-const UPG_EDGE = 0.97, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
+const UPG_EDGE = 0.90, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
 const UPG_SPIN_MS = 3400;
 const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, t0: 0, angle: 180, tick: 0, res: null, hist: [], bannerTimer: 0 };
 const upgChance = () => UPG_EDGE / UPG_MULTS[upg.mult];
@@ -2459,16 +2678,22 @@ function renderUpg() {
   $("uHist").innerHTML = upg.hist.map((h) => `<span class="${h > 0 ? "w" : ""}">${h > 0 ? "+" : "−"}${fmt(Math.abs(h))}</span>`).join("");
   if (!busy) drawUpg();
 }
-function spinUpg() {
-  if (upg.phase === "spin") return;
+async function spinUpg() {
+  if (upg.phase === "spin" || upg.pending) return;
   upg.bet = clampBet(upg.bet);
   const bet = upg.bet, mult = UPG_MULTS[upg.mult];
-  if (!Wallet.bet(bet)) { $("uNext").textContent = "Не хватает монэток на ставку"; return; }
-  const land = rnd() * 360;
-  const win = ((land - upg.arcStart + 360) % 360) < upgChance() * 360;
+  // the server charges the bet and picks where the blade stops; the page only spins to that angle
+  upg.pending = true;
+  let r;
+  try { r = await api("/api/upg/spin", { bet, mult: upg.mult }, { keepBalance: true }); }
+  catch (e) { upg.pending = false; $("uNext").textContent = e.message; return; }
+  upg.pending = false;
+  Wallet.set(Wallet.get() - bet);
+  upg.pendingBalance = r.balance;
+  const land = r.land, win = r.win;
   upg.from = upg.angle % 360;
   upg.to = upg.from + 360 * 5 + ((land - upg.from + 360) % 360);
-  Object.assign(upg, { phase: "spin", t0: performance.now(), tick: Math.floor(upg.from / 10), res: { win, bet, prize: bet * mult, mult } });
+  Object.assign(upg, { phase: "spin", t0: performance.now(), tick: Math.floor(upg.from / 10), res: { win, bet, prize: r.prize, mult } });
   clearTimeout(upg.bannerTimer);
   $("uRes").className = "ures"; $("uRes").parentElement.classList.remove("burned", "blessed");
   $("uNext").textContent = "Клинок вращается…";
@@ -2499,9 +2724,8 @@ function showUpgBanner(win, title, sub) {
 function finishUpg(now) {
   const r = upg.res;
   upg.phase = "done"; r.at = now; upg.angle %= 360;
+  Wallet.set(upg.pendingBalance);
   if (r.win) {
-    Wallet.win(r.prize);
-    pushWin({ name: "Ты", you: true, game: "Upgrader", amount: r.prize, mult: r.mult });
     showUpgBanner(true, "Улучшено", `+${fmt(r.prize)}`);
     $("uNext").textContent = `Клинок попал в дугу. ${fmt(r.bet)} превратились в ${fmt(r.prize)}`;
     upg.hist.unshift(r.prize - r.bet);
@@ -2532,34 +2756,51 @@ window.__simulateUpg = function (mi = 2, rounds = 300000) {
 };
 
 /* ---------- coffins ---------- */
-// Case opening with coffins. Every coffin shares one loot table; an item pays price x multiplier.
-// Multipliers are scaled by LOOT_K so the expected payout is exactly 97% of the coffin price.
+// Case opening with coffins. Every case has its own nine items, but they sit on the same nine value
+// tiers (the server draws a tier), so each case returns the same share of its price; an item pays
+// price x multiplier, scaled by LOOT_K so the expected payout is exactly 90% of the case price.
 const LOOT = [
-  { name: "Кость", face: "🦴", m: 0.2, w: 30, rc: "#3a3a3a" },
-  { name: "Огарок свечи", face: "🕯️", m: 0.5, w: 25, rc: "#4e4e4e" },
-  { name: "Ржавый ключ", face: "🗝️", m: 0.8, w: 18, rc: "#6a6a6a" },
-  { name: "Кольцо вдовы", face: "💍", m: 1.2, w: 12, rc: "#8a8a8a" },
-  { name: "Серебряный кинжал", face: "🗡️", m: 2, w: 8, rc: "#bdbdbd" },
-  { name: "Урна с прахом", face: "⚱️", m: 3, w: 4, rc: "#e6e6e6" },
-  { name: "Кубок крови", face: "🍷", m: 5, w: 2, rc: "#8e1b1b" },
-  { name: "Корона графа", face: "👑", m: 10, w: 0.8, rc: "#c01c1c" },
-  { name: "Сердце вампира", face: "❤️", m: 25, w: 0.2, rc: "#ff3a3a" },
+  { m: 0.2, w: 30, rc: "#3a3a3a" },
+  { m: 0.5, w: 25, rc: "#4e4e4e" },
+  { m: 0.8, w: 18, rc: "#6a6a6a" },
+  { m: 1.2, w: 12, rc: "#8a8a8a" },
+  { m: 2, w: 8, rc: "#bdbdbd" },
+  { m: 3, w: 4, rc: "#e6e6e6" },
+  { m: 5, w: 2, rc: "#8e1b1b" },
+  { m: 10, w: 0.8, rc: "#c01c1c" },
+  { m: 25, w: 0.2, rc: "#ff3a3a" },
 ];
+// [name, icon] from the cheapest tier to the rarest
+const CASE_ITEMS = [
+  // a pauper's grave
+  [["Кость", "bone"], ["Гвоздь", "nail"], ["Свеча", "candle"], ["Монета", "coin"], ["Ключ", "key"], ["Фонарь", "lantern"], ["Колокол", "bell"], ["Крест", "cross"], ["Череп", "skull"]],
+  // a vampire hunter's kit
+  [["Чеснок", "garlic"], ["Гвоздь", "nail"], ["Кол", "stake"], ["Фонарь", "lantern"], ["Крест", "cross"], ["Нож", "dagger"], ["Святая вода", "potion"], ["Книга", "book"], ["Меч", "sword"]],
+  // a count's belongings
+  [["Свеча", "candle"], ["Роза", "rose"], ["Монета", "coin"], ["Кольцо", "ring"], ["Кубок", "goblet"], ["Нож", "dagger"], ["Урна", "urn"], ["Амулет", "amulet"], ["Корона", "crown"]],
+  // a warlock's stash
+  [["Кость", "bone"], ["Свеча", "candle"], ["Зелье", "potion"], ["Книга", "book"], ["Череп", "skull"], ["Кольцо", "ring"], ["Амулет", "amulet"], ["Корона", "crown"], ["Клык", "fang"]],
+  // the vampire's own coffin
+  [["Роза", "rose"], ["Мышь", "bat"], ["Кольцо", "ring"], ["Клык", "fang"], ["Кубок", "goblet"], ["Амулет", "amulet"], ["Сердце", "heart"], ["Корона", "crown"], ["Труп вампира", "corpse"]],
+];
+const CASE_LOOT = CASE_ITEMS.map((items) => items.map(([name, icon], i) => ({ ...LOOT[i], name, icon })));
 const LOOT_W = LOOT.reduce((a, l) => a + l.w, 0);
-const LOOT_K = 0.97 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
+const LOOT_K = 0.90 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
 const COFFINS = [
-  { name: "Сосновый гроб", price: 100, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
-  { name: "Дубовый гроб", price: 500, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
-  { name: "Гроб графа", price: 2500, w1: "#151515", w2: "#353535", cross: "#f0f0f0" },
-  { name: "Саркофаг", price: 10000, w1: "#6a6a6a", w2: "#a0a0a0", cross: "#151515" },
-  { name: "Гроб вампира", price: 50000, w1: "#2a0505", w2: "#5e0e0e", cross: "#ff4a4a" },
+  { name: "Простой кейс", price: 100, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
+  { name: "Обычный кейс", price: 500, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
+  { name: "Редкий кейс", price: 2500, w1: "#151515", w2: "#353535", cross: "#f0f0f0" },
+  { name: "Эпический кейс", price: 10000, w1: "#6a6a6a", w2: "#a0a0a0", cross: "#151515" },
+  { name: "Легендарный кейс", price: 50000, w1: "#2a0505", w2: "#5e0e0e", cross: "#ff4a4a" },
 ];
 const cof = { sel: 0, phase: "idle", t0: 0, dist: 0, step: 0, tick: -1, won: null, hist: [] };
 const lootPay = (item, price) => Math.round(price * item.m * LOOT_K);
-const pickLoot = () => weighted(LOOT.map((l) => [l, l.w]));
+const pickLoot = (ci = cof.sel) => weighted(CASE_LOOT[ci].map((l) => [l, l.w]));
 
-const LOOT_ICON = ["bone", "candle", "key", "ring", "dagger", "urn", "goblet", "crown", "heart"];
-function buildLootSprites() { LOOT.forEach((l, i) => { l.spr = pixelIcon(LOOT_ICON[i]); }); }
+function buildLootSprites() {
+  const done = {};
+  CASE_LOOT.flat().forEach((l) => { l.spr = done[l.icon] ||= pixelIcon(l.icon); });
+}
 const lootCard = (l, price) => `<div class="loot" style="--rc:${l.rc}"><img src="${l.spr}" alt=""><i>${l.name}</i><b>${fmt(lootPay(l, price))}</b></div>`;
 function renderCof() {
   const c = COFFINS[cof.sel], busy = cof.phase === "spin";
@@ -2585,11 +2826,17 @@ function fillStrip(won) {
   strip.innerHTML = items.map((l) => lootCard(l, price)).join("");
   strip.style.transform = "translateX(0)";
 }
-function openCoffin() {
+async function openCoffin() {
   const c = COFFINS[cof.sel];
-  if (cof.phase === "spin") return;
-  if (!Wallet.bet(c.price)) { $("cofNext").textContent = "Не хватает монэток на этот гроб"; return; }
-  cof.won = pickLoot();
+  if (cof.phase === "spin" || cof.pending) return;
+  // the server takes the price and draws the loot; the reel just rolls to it
+  cof.pending = true;
+  let r;
+  try { r = await api("/api/coffin/open", { coffin: cof.sel }, { keepBalance: true }); }
+  catch (e) { cof.pending = false; $("cofNext").textContent = e.message; return; }
+  cof.pending = false;
+  Wallet.set(Wallet.get() - c.price);
+  cof.won = CASE_LOOT[cof.sel][r.loot]; cof.pay = r.pay; cof.pendingBalance = r.balance;
   fillStrip(cof.won);
   $("cofRes").classList.remove("on");
   const strip = $("cofStrip"), card = strip.children[0], win = strip.parentElement;
@@ -2597,7 +2844,7 @@ function openCoffin() {
   // land the marker somewhere inside the won card, never exactly on its edge
   cof.dist = WIN_AT * cof.step + card.offsetWidth / 2 - win.clientWidth / 2 + (rnd() - 0.5) * card.offsetWidth * 0.7;
   Object.assign(cof, { phase: "spin", t0: performance.now(), tick: -1 });
-  $("cofNext").textContent = "Крышка скрипит…";
+  $("cofNext").textContent = "Открываем…";
   updateHud(); renderCof();
   requestAnimationFrame(cofFrame);
 }
@@ -2611,16 +2858,15 @@ function cofFrame(now) {
   finishCoffin();
 }
 function finishCoffin() {
-  const c = COFFINS[cof.sel], l = cof.won, pay = lootPay(l, c.price);
+  const c = COFFINS[cof.sel], l = cof.won, pay = cof.pay;
   cof.phase = "idle";
-  Wallet.win(pay);
+  Wallet.set(cof.pendingBalance);
   $("cofStrip").children[WIN_AT].classList.add("won");
   $("cofRes").innerHTML = `<img src="${l.spr}" alt="" style="width:calc(var(--cell)*.5);image-rendering:pixelated">${l.name}<small>+${fmt(pay)} · x${(pay / c.price).toFixed(2)}</small>`;
   $("cofRes").classList.add("on");
-  $("cofNext").textContent = pay >= c.price ? `В гробу было: ${l.name}. Неплохо` : `В гробу было: ${l.name}. Мертвец оказался беден`;
+  $("cofNext").textContent = pay >= c.price ? `Выпало: ${l.name}. В плюсе` : `Выпало: ${l.name}. В минусе`;
   cof.hist.unshift(pay - c.price);
   cof.hist.length = Math.min(cof.hist.length, 10);
-  if (pay > c.price) pushWin({ name: "Ты", you: true, game: "Coffins", amount: pay, mult: pay / c.price });
   Sfx.play(l.m >= 5 ? "big" : l.m >= 1 ? "win" : "lose");
   updateHud(); renderCof();
 }
@@ -2779,6 +3025,31 @@ function killCrow(c, e) {
     setTimeout(() => f.remove(), 1200);
   }
 }
+// The game screens lie over the crow layer, so a crow is hit-tested by position: a click anywhere on the
+// screen kills the crow under it, unless the click lands on a control (a button, a door, a tile...).
+const CROW_SKIP = "button, input, select, textarea, a, label, .door, .tile, .room, .coffin, [data-room], .modal, .cash-modal";
+// a crow behind a solid panel (the reels, a card table) is out of sight and out of reach
+function hidesCrows(el) {
+  for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+    if (n.id === "crows") return false;
+    if (/^(CANVAS|IMG|SVG|VIDEO)$/i.test(n.tagName)) return true;
+    const cs = getComputedStyle(n);
+    if (cs.backgroundImage !== "none") return true;
+    const a = cs.backgroundColor.match(/rgba?\(([^)]+)\)/);
+    if (a) { const v = a[1].split(",").map(Number); if ((v.length < 4 ? 1 : v[3]) > 0.35) return true; }
+  }
+  return false;
+}
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest || e.target.closest(CROW_SKIP) || hidesCrows(e.target)) return;
+  const pad = 6;
+  for (let i = crows.length - 1; i >= 0; i--) {
+    const c = crows[i];
+    if (c.mode === "fall" || c.mode === "gone") continue;
+    const r = c.el.getBoundingClientRect();
+    if (e.clientX >= r.left - pad && e.clientX <= r.right + pad && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad) return killCrow(c, e);
+  }
+}, true);
 function addCrow(perched) {
   const el = document.createElement("img");
   el.className = "crow"; el.alt = ""; el.draggable = false;
@@ -2934,6 +3205,16 @@ async function init() {
   snapPerches();
   startCrows();
   requestAnimationFrame(crashFrame);
+  try { if (window.huevo) huevo.init().catch(() => {}); } catch {}
+  // sign in to the game server; a free Render instance may need up to a minute to wake up
+  for (let i = 0; i < 12; i++) {
+    try { await login(); break; }
+    catch (e) {
+      if ($("gate").classList.contains("on")) break;     // not opened from huEVO
+      toast(i ? "Будим сервер игры…" : "Подключаемся к серверу…", false);
+      await sleep(5000);
+    }
+  }
   let t;
   addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => {
     const svg = document.querySelector(".backdrop svg"); svg.style.display = ""; pixelateBackdrop().then(snapPerches).catch(() => {});
