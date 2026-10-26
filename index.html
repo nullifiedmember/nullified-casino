@@ -125,6 +125,7 @@
   .row { display: flex; gap: 6px; }
   .row button { flex: 1; height: calc(var(--cell) * .3); font-size: calc(var(--cell) * .13); letter-spacing: .15em; }
   .row button.on { background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; }
+  .betquick button { height: calc(var(--cell) * .24); }
   .msg { min-height: calc(var(--cell) * .3); text-align: center; font-size: calc(var(--cell) * .14); color: #fff; text-shadow: 0 0 8px #000, 0 0 2px #000; }
 
   .fsbar { display: none; position: fixed; top: 54px; left: 50%; transform: translateX(-50%); z-index: 5; white-space: nowrap;
@@ -217,6 +218,9 @@
   .tile.dim { opacity: .4; }
   .tile:disabled { cursor: default; opacity: 1; }
   .tile.dim:disabled { opacity: .4; }
+  /* clicked, waiting for the server: the slab reacts at once */
+  .tile.pending { background: linear-gradient(135deg, #5a5a5a, #262626); transform: scale(.93); animation: tilewait .35s ease-in-out infinite alternate; }
+  @keyframes tilewait { from { filter: brightness(1); } to { filter: brightness(1.6); } }
   @keyframes shake { 0%,100% { transform: translate(0); } 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, 3px); } 80% { transform: translate(3px, -1px); } }
   .mines .side .go { height: calc(var(--cell) * .45); font-size: calc(var(--cell) * .11) !important; font-family: "Press Start 2P", monospace;
     background: linear-gradient(#5a5a5a, #1a1a1a); color: #fff; }
@@ -437,8 +441,8 @@
   .cofres.on { display: flex; animation: fadein .3s; }
   .cofres small { font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .06); color: #bdbdbd; }
   @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-  .odds { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .04); }
-  .odds span { padding: 3px 4px; border: 1px solid var(--rc); color: #bdbdbd; }
+  .odds { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; font-family: "Press Start 2P", monospace; font-size: max(9px, calc(var(--cell) * .058)); }
+  .odds span { padding: 4px 6px; border: 1px solid var(--rc); color: #e6e6e6; background: rgba(0,0,0,.55); }
   .cof .side .go { height: calc(var(--cell) * .45); font-size: calc(var(--cell) * .095) !important; font-family: "Press Start 2P", monospace;
     background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; color: #fff; }
   .cof .next { text-align: center; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .065); color: #bdbdbd; line-height: 1.8; min-height: 3.6em; }
@@ -556,15 +560,33 @@
 
 <div class="stage view" id="slots">
   <div class="nave">
-    <!-- straight gable roof; rasterised to low-res pixels at start-up -->
+    <!-- gothic cathedral front over the reels: a pointed gable with a rose window, spires at the corners and a
+         blind arcade along the cornice; rasterised to low-res pixels at start-up. The box is stretched wide,
+         so round things are drawn narrow (ellipses) to come out round. -->
     <svg class="arch" viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0 100V78L200 4L400 78V100Z" fill="#101010"/>
-      <path d="M0 78L200 4L400 78" fill="none" stroke="#9a9a9a" stroke-width="3"/>
-      <path d="M26 100L200 22L374 100" fill="none" stroke="#3c3c3c" stroke-width="3"/>
-      <rect x="0" y="94" width="400" height="6" fill="#5a5a5a"/>
-      <ellipse cx="200" cy="62" rx="18" ry="22" fill="#1c1c1c" stroke="#8a8a8a" stroke-width="2.5"/>
-      <path d="M200 40V84M182 62H218M188 47L212 77M212 47L188 77" stroke="#8a8a8a" stroke-width="2"/>
-      <ellipse cx="200" cy="62" rx="5" ry="6" fill="#d0d0d0"/>
+      <!-- side aisles with battlements -->
+      <path d="M0 100V72H8V66H16V72H28V66H36V72H48V66H56V72H68V66H76V72H88V66H96V72H108V66H116V72H140V100Z" fill="#141414" stroke="#6a6a6a" stroke-width="1.5"/>
+      <path d="M260 100V72H284V66H292V72H304V66H312V72H324V66H332V72H344V66H352V72H364V66H372V72H384V66H392V72H400V100Z" fill="#141414" stroke="#6a6a6a" stroke-width="1.5"/>
+      <!-- the pointed gable -->
+      <path d="M140 100V86Q170 50 200 2Q230 50 260 86V100Z" fill="#0e0e0e"/>
+      <path d="M140 86Q170 50 200 2Q230 50 260 86" fill="none" stroke="#a8a8a8" stroke-width="3"/>
+      <path d="M152 94Q178 60 200 18Q222 60 248 94" fill="none" stroke="#3c3c3c" stroke-width="2.5"/>
+      <!-- crockets along the gable -->
+      <path d="M160 64l-4-6M172 46l-4-6M184 28l-4-6M216 28l4-6M228 46l4-6M240 64l4-6" stroke="#8a8a8a" stroke-width="2.5"/>
+      <!-- rose window: stone ring, eight petals of tracery, blood-red glass in the heart -->
+      <ellipse cx="200" cy="58" rx="15" ry="26" fill="#1c1c1c" stroke="#9a9a9a" stroke-width="2.5"/>
+      <ellipse cx="200" cy="58" rx="10.5" ry="18" fill="#3a3a3a"/>
+      <path d="M200 32V84M185 58H215M189.5 40L210.5 76M210.5 40L189.5 76" stroke="#8a8a8a" stroke-width="2"/>
+      <ellipse cx="200" cy="58" rx="4.5" ry="8" fill="#a01818" stroke="#d8d8d8" stroke-width="1.2"/>
+      <!-- spires: tall ones at the corners, small pinnacles where the gable meets the aisles -->
+      <path d="M2 74V36L8 12L14 36V74Z M386 74V36L392 12L398 36V74Z" fill="#161616" stroke="#8a8a8a" stroke-width="1.5"/>
+      <path d="M8 12V2M5 5H11M392 12V2M389 5H395" stroke="#bdbdbd" stroke-width="1.5"/>
+      <path d="M134 88V54L140 32L146 54V88Z M254 88V54L260 32L266 54V88Z" fill="#161616" stroke="#8a8a8a" stroke-width="1.5"/>
+      <path d="M200 2V-6" stroke="#bdbdbd" stroke-width="2"/>
+      <!-- blind arcade of lancet arches along the cornice -->
+      <path d="M24 92V82Q30 74 36 82V92M52 92V82Q58 74 64 82V92M80 92V82Q86 74 92 82V92M308 92V82Q314 74 320 82V92M336 92V82Q342 74 348 82V92M364 92V82Q370 74 376 82V92" fill="#070707" stroke="#5a5a5a" stroke-width="1.5"/>
+      <rect x="0" y="93" width="400" height="7" fill="#5a5a5a"/>
+      <rect x="0" y="93" width="400" height="1.5" fill="#9a9a9a"/>
     </svg>
     <div class="reels" id="reels"></div>
   </div>
@@ -871,11 +893,23 @@ function bindBet(inputId, downId, upId, obj, render) {
   el.addEventListener("keydown", (e) => { if (e.key === "Enter") el.blur(); });
   document.getElementById(downId).onclick = () => { obj.bet = [...BET_STEPS].reverse().find((s) => s < obj.bet) ?? BET_MIN; render(); };
   document.getElementById(upId).onclick = () => { obj.bet = BET_STEPS.find((s) => s > obj.bet) ?? BET_MAX; render(); };
+  // ½ and Max under the bet: half the balance or all of it, kept within the bet limits
+  const quick = document.createElement("div");
+  quick.className = "row betquick"; quick.dataset.for = inputId;
+  quick.innerHTML = `<button type="button" data-q="half">½ баланса</button><button type="button" data-q="max">Макс</button>`;
+  document.getElementById(downId).closest(".betctl").after(quick);
+  quick.onclick = (e) => {
+    const b = e.target.closest("button[data-q]");
+    if (!b || b.disabled) return;
+    obj.bet = clampBet(b.dataset.q === "half" ? Math.floor(Wallet.get() / 2) : Wallet.get());
+    render();
+  };
 }
 function showBet(inputId, value, locked) {
   const el = document.getElementById(inputId);
   if (document.activeElement !== el) el.value = fmt(value);
   el.disabled = locked;
+  for (const b of document.querySelectorAll(`.betquick[data-for="${inputId}"] button`)) b.disabled = locked;
 }
 
 function rnd() { return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296; }
@@ -1084,7 +1118,7 @@ async function pickServer() {
 }
 // live: the last poll got through; seq counts game actions so a poll that crossed one is not trusted;
 // holdUntil keeps a poll from showing a result an animation is still about to reveal
-const Net = { token: "", user: null, test: false, live: false, lastWin: 0, seq: 0, holdUntil: 0, polling: false, wake: null };
+const Net = { token: "", user: null, test: false, live: false, lastWin: 0, seq: 0, holdUntil: 0, polling: false, wake: null, offset: 0 };   // offset: server clock - ours
 const Wallet = {
   value: 0,
   get() { return this.value; },
@@ -1139,7 +1173,7 @@ async function login() {
 // It polls fast only where something moves: the bat's flight and a player waiting in a Duel room.
 function pollDelay() {
   if (document.hidden) return 20000;
-  if (view === "crash") return crash.phase === "fly" ? 400 : 1000;
+  if (view === "crash") return crash.phase === "fly" ? 300 : 1000;
   if (view === "duel") return duel.phase === "wait" ? 1000 : 2500;
   return 8000;
 }
@@ -1156,6 +1190,7 @@ async function pollLoop() {
     try {
       const j = await api("/api/poll", { since: Net.lastWin, crash: view === "crash", duel: view === "duel" });
       Net.live = true;
+      if (j.now) Net.offset = j.now - (sent + Date.now()) / 2;
       takeWins(j.wins);
       if (j.crash) crashOnState(j.crash, (sent + Date.now()) / 2);
       if (j.duel) duelOnPoll(j.duel, j.balance);
@@ -2066,23 +2101,42 @@ function showMinesWin(r) {
   updateMines(); updateHud();
   $("mNext").textContent = `Забрал ${fmt(r.win)} (${fmtMult(r.mult)})`;
 }
-async function openTile(i) {
-  if (!mines.active || mines.opened.has(i) || mines.pending) return;
+// A click lights the slab at once and joins a queue, so several slabs can be picked in a row while the
+// server answers; they are opened one by one, and the rest are dropped if a sword turns up.
+mines.queue = [];
+function markPending() {
+  [...$("mgrid").children].forEach((el, i) => el.classList.toggle("pending", mines.queue.includes(i)));
+}
+function openTile(i) {
+  if (!mines.active || mines.opened.has(i) || mines.queue.includes(i)) return;
+  mines.queue.push(i);
+  Sfx.play("tick");
+  markPending();
+  if (!mines.pending) drainTiles();
+}
+async function drainTiles() {
   mines.pending = true;
-  let r;
-  try { r = await api("/api/mines/open", { i }); } catch (e) { mines.pending = false; $("mNext").textContent = e.message; return; }
-  mines.pending = false;
-  if (r.boom !== undefined) {
-    endMines(r); mines.boom = r.boom;
-    Sfx.play("boom");
-    updateMines(); updateHud();
-    $("mNext").textContent = "Меч! Ставка сгорела";
-    return;
+  while (mines.queue.length && mines.active) {
+    const i = mines.queue[0];
+    let r;
+    try { r = await api("/api/mines/open", { i }); }
+    catch (e) { mines.queue = []; $("mNext").textContent = e.message; break; }
+    mines.queue.shift();
+    if (r.boom !== undefined) {
+      mines.queue = [];
+      endMines(r); mines.boom = r.boom;
+      Sfx.play("boom");
+      updateMines(); updateHud();
+      $("mNext").textContent = "Меч! Ставка сгорела";
+      break;
+    }
+    if (r.cashed) { mines.queue = []; Sfx.play("safe"); mines.pending = false; return showMinesWin(r); }   // every safe slab opened: paid out
+    mines.opened = new Set(r.opened);
+    Sfx.play("safe");
+    updateMines(); markPending();
   }
-  if (r.cashed) { Sfx.play("safe"); return showMinesWin(r); }   // every safe slab opened: paid out automatically
-  mines.opened = new Set(r.opened);
-  Sfx.play("safe");
-  updateMines();
+  mines.pending = false;
+  markPending();
 }
 $("mGo").onclick = () => (mines.active ? cashOut() : startMines());
 bindBet("mBet", "mBetDown", "mBetUp", mines, updateMines);
@@ -2208,7 +2262,7 @@ bindBet("bjBet", "bjBetDown", "bjBetUp", bj, renderBJ);
 /* ---------- crash ---------- */
 // A bat climbs while the multiplier grows as e^(k·t) and drops at a random crash point.
 // P(point >= x) = 0.90 / x, so every cash-out strategy returns ~90%.
-const CRASH_EDGE = 0.90, CRASH_K = 0.14;
+const CRASH_EDGE = 0.90, CRASH_K = 0.14, CRASH_VIEW_DELAY = 700;
 const CRASH_AUTO = [0, 1.2, 1.5, 2, 3, 5, 10, 25, 100];
 const CW = 192, CH = 108;
 const BAT = {
@@ -2416,7 +2470,9 @@ function crashTick() {
     crashLaunchSound();
   }
   if (crash.phase === "bet") { crash.el = CRASH_BET_SEC - (crash.betEnds - now) / 1000; crash.sec = 0; crash.m = 1; }
-  else if (crash.phase === "fly") { crash.sec = Math.max(0, (now - crash.flyStart) / 1000); crash.m = crashMult(crash.sec); }
+  // the flight is shown CRASH_VIEW_DELAY behind the server: the crash point arrives (after the server's grace)
+  // about when the picture gets there, and "Забрать" pays the multiplier shown on the screen
+  else if (crash.phase === "fly") { crash.sec = Math.max(0, (now - CRASH_VIEW_DELAY - crash.flyStart) / 1000); crash.m = crashMult(crash.sec); }
   else { crash.sec = Math.log(crash.point) / CRASH_K; crash.m = crash.point; }
 }
 function crashFrame(now) {
@@ -2431,7 +2487,7 @@ $("cGo").onclick = async () => {
   crash.pending = true;
   try {
     if (me) {
-      const r = await api("/api/crash/cash", {});
+      const r = await api("/api/crash/cash", { m: Math.floor(crash.m * 100) / 100 });
       me.cashed = r.cashed;
       crashMsg(`Забрал ${fmt(r.win)} на x${r.cashed.toFixed(2)}`);
       Sfx.play("coin");
@@ -2499,7 +2555,9 @@ async function enterDuel(stake) {
   if (duel.pending) return;
   duel.pending = true; duel.stake = stake;
   try {
+    const sent = Date.now();
     const r = await api("/api/duel/join", { stake }, { keepBalance: true });
+    if (r.now) Net.offset = r.now - (sent + Date.now()) / 2;
     if (r.wait) { Wallet.set(r.balance); duelOnWait(r); }
     else duelOnMatch({ ...r.match, balance: r.balance });
   } catch (e) { $("dNext").textContent = e.message; }
@@ -2518,7 +2576,9 @@ function duelOnMatch(m) {
   Object.assign(duel, { stake: m.stake, opp: m.opp, prize: m.prize, pendingBalance: m.balance });
   openArena(m.stake);
   $("dLeave").disabled = true;
-  Object.assign(duel, { phase: "walk", t0: performance.now(), youDie: !!m.youDie, step: -1, dimmed: false, swooped: false, resolved: false });
+  // both players' scenes start at the same server moment, startAt
+  const wait = m.startAt ? Math.max(0, m.startAt - (Date.now() + Net.offset)) : 0;
+  Object.assign(duel, { phase: "walk", t0: performance.now() + wait, youDie: !!m.youDie, step: -1, dimmed: false, swooped: false, resolved: false });
   $("dOppName").textContent = m.opp;
   $("dNext").textContent = "Тише… в замке кто-то есть";
   renderRooms();
@@ -2570,7 +2630,7 @@ function drawPix(x, rows, cx, bottom, pal, s = 2) {
 const DW = 192, DH = 108, FLOOR = 90, YOU_X = 80, OPP_X = 112;
 function drawDuel(now) {
   const x = $("dCanvas").getContext("2d");
-  const t = duel.phase === "wait" ? 0 : (now - duel.t0) / 1000;
+  const t = duel.phase === "wait" ? 0 : Math.max(0, (now - duel.t0) / 1000);   // before the shared start: standing at the gate
   const walking = duel.phase === "walk" && t < DUEL_WALK;
   const scroll = (duel.phase === "wait" ? 0 : Math.min(t, DUEL_WALK)) * 26;
   const dark = t < DUEL_WALK ? 0 : Math.min(1, (t - DUEL_WALK) / 0.5);
