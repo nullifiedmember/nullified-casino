@@ -1189,10 +1189,11 @@ async function login() {
 // Live state comes by polling: shared Crash rounds, Duel rooms, everyone's wins and the balance.
 // It polls fast only where something moves: the bat's flight and a player waiting in a Duel room.
 function pollDelay() {
-  if (document.hidden) return 20000;
-  if (view === "crash") return crash.phase === "fly" ? 300 : 1000;
-  if (view === "duel") return duel.phase === "wait" ? 1000 : 2500;
-  return 8000;
+  // free hosting counts every request, so polls are spaced out wherever nothing is moving
+  if (document.hidden) return 60000;
+  if (view === "crash") return crash.phase === "fly" ? 500 : 1500;
+  if (view === "duel") return duel.phase === "wait" ? 1000 : 5000;
+  return 20000;
 }
 function pollNow() { if (Net.wake) Net.wake(); }
 const pollWait = (ms) => new Promise((resolve) => {
