@@ -1121,9 +1121,9 @@ window.__simulate = function (rounds = 200000) {
 /* ---------- game server ---------- */
 // Everything with coins goes through the game server: it checks the huEVO launch signature, keeps the
 // balance in huEVO coins and draws every outcome. The page only shows what the server answers.
-// The relay on deno.dev opens from Russia, where many providers block *.vercel.app; the direct
-// address is the fallback. The first one that answers is used.
-const SERVERS = ["https://purple-sawfish-6360.nullifiedmember.deno.net", "https://nullified-casino-server.vercel.app"];
+// The direct address first; the relay on deno.net only for networks that block *.vercel.app, which keeps
+// the relay's free request limit for the players who need it. The first one that answers is used.
+const SERVERS = ["https://nullified-casino-server.vercel.app", "https://purple-sawfish-6360.nullifiedmember.deno.net"];
 let SERVER = SERVERS[0];
 async function pickServer() {
   for (const s of SERVERS) {
@@ -1158,9 +1158,10 @@ async function api(path, body, { keepBalance = false, retried = false } = {}) {
   if (path !== "/api/poll") Net.seq++;
   if (keepBalance) Net.holdUntil = Date.now() + 15000;
   try {
-    r = await fetch(SERVER + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + Net.token }, body: JSON.stringify(body || {}) });
+    r = await fetch(SERVER + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + Net.token },
+      body: JSON.stringify(body || {}), signal: AbortSignal.timeout(15000) });
     j = await r.json().catch(() => ({}));
-  } catch { throw new Error("Нет связи с сервером игры"); }
+  } catch (e) { throw new Error(e && e.name === "TimeoutError" ? "Сервер игры не отвечает" : "Нет связи с сервером игры"); }
   if (r.status === 401 && path !== "/api/login" && !retried) { await login(); return api(path, body, { keepBalance, retried: true }); }  // the session ran out
   if (!j.ok) { if (typeof j.balance === "number") Wallet.set(j.balance); const e = new Error(j.error || "Ошибка сервера"); e.data = j; throw e; }
   if (!keepBalance && path !== "/api/poll" && typeof j.balance === "number") Wallet.set(j.balance);
@@ -2006,15 +2007,23 @@ $("cashCancel").onclick = () => $("cashModal").classList.remove("on");
 $("cashOk").onclick = async () => {
   const amount = Number($("cashAmount").value);
   if (!amount) return;
+  // every step says what is going on, so a slow network never looks like a dead button
+  const step = (text) => { $("cashText").innerHTML = text; };
+  if (!Net.token) { toast("Нет входа в игру: обнови страницу (Ctrl+F5)", true); return; }
   $("cashOk").disabled = true;
   try {
     if (cashMode === "withdraw") {
+      step("Выводим монэтки…");
       const r = await api("/api/withdraw", { amount });
       toast(`Выведено ${fmt(r.paid || afterFee(amount))} на huEVO (комиссия 5%)`);
     } else {
+      step("Создаём платёж…");
       const { intent_id } = await api("/api/deposit", { amount });
+      // the huEVO script loads in the background; give a slow network a few seconds to bring it
+      for (let i = 0; i < 16 && !window.huevo; i++) { step("Загружаем окно оплаты huEVO…"); await sleep(500); }
+      if (!window.huevo) throw new Error("Окно оплаты huEVO не загрузилось, обнови страницу");
       $("cashModal").classList.remove("on");
-      if (!window.huevo) throw new Error("Окно оплаты huEVO недоступно");
+      toast("Подтверди оплату в окне huEVO", false);
       const res = await huevo.confirmPayment(intent_id);
       if (res.status !== "succeeded") throw new Error(res.status === "cancelled" ? "Оплата отменена" : "Оплата не прошла");
       // huEVO also calls the server back; checking here makes the coins appear right away
@@ -2023,7 +2032,7 @@ $("cashOk").onclick = async () => {
       toast(`Пополнено на ${fmt(credited > 0 ? credited : afterFee(amount))} (комиссия 5%)${res.test ? " · тест" : ""}`);
     }
     $("cashModal").classList.remove("on");
-  } catch (e) { toast(e.message, true); }
+  } catch (e) { toast(e.message, true); step(`<span style="color:#ff6a6a">${escapeHtml(e.message)}</span>`); }
   $("cashOk").disabled = false;
 };
 $("depositBtn").onclick = () => openCash("deposit");
