@@ -1099,48 +1099,197 @@ function stainedGlass(x, w, h) {
   x.restore();
   x.lineWidth = 2.2; x.strokeStyle = "#111"; x.stroke(arch);
 }
-// Hand-drawn 16x16 pixel icons. Emoji look different on every OS (and are missing on some), so every
-// game icon is drawn from these grids instead and looks the same everywhere. Rows are auto-centred.
-const ICON_COLORS = { W: "#ececec", L: "#a8a8a8", G: "#6e6e6e", K: "#111111", R: "#c01c1c", r: "#7a1010" };
-const ICONS = {
-  skull: ["....KKKKKKKK....", "...KWWWWWWWWK...", "..KWWWWWWWWWWK..", ".KWWWWWWWWWWWWK.", ".KWWWWWWWWWWWWK.", ".KWKKKWWWWKKKWK.",
-    ".KWKKKKWWKKKKWK.", ".KWKKKWWWWKKKWK.", ".KWWWWWKKWWWWWK.", "..KWWWWKKWWWWK..", "...KWWWWWWWWK...", "...KWKWKWKWWK...", "...KLWLWLWLWK...", "....KKKKKKKK...."],
-  bat: ["W......WW......W", "WW....WWWW....WW", "WWW..WRWWRW..WWW", "WWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWW", ".WWWLWWWWWWLWWW.",
-    "..WL.LWWWWL.LW..", "..L....WW....L..", ".......LL......."],
-  candle: ["........W.......", ".......WWW......", ".......WRW......", "........W.......", "........K.......", "......WWWWW.....",
-    "......WWWWWL....", "......WWWWWL....", ".....LWWWWWL....", ".....LWWWWWL....", "......WWWWWL....", "......WWWWWL....", "....GGGGGGGGG...", "...GLLLLLLLLLG..", "....GGGGGGGGG..."],
-  key: ["..WWWW..........", ".WW..WW.........", "WW....WW........", "WW....WW........", ".WW..WW.........", "..WWWWLLLLLLLLLL",
-    "..........LL.LL.", "..........LL.LL.", "...............L"],
-  rose: ["......RRR.......", ".....RRrRR......", "....RRWRRRR.....", "....RrRRWRR.....", ".....RRrRR......", "......RRR.......",
-    ".......G........", "......GG...GG...", ".......G.GG.....", ".......GG.......", ".......G........", "......GG........", ".......G........"],
-  bell: [".......WW.......", "......WLLW......", ".....WWWWWW.....", "....WWWWWWLW....", "....WWWWWWLW....", "....WWWWWWLW....",
-    "...WWWWWWWWLW...", "...WWWWWWWWLW...", "..WWWWWWWWWWLW..", ".WWWWWWWWWWWWLW.", ".LLLLLLLLLLLLLL.", "......WWW.......", ".......W........"],
-  knife: [".............WW.", "............WWL.", "...........WWL..", "..........WWL...", ".........WWL....", "........WWL.....",
-    ".......WWL......", "......WWL.......", ".....RWL........", "....GLG.........", "...LGG..........", "..LGL...........", ".LGL............", "LG.............."],
-  spade: [".......W........", "......WWW.......", ".....WWWWW......", "....WWWWWWW.....", "...WWWWWWWWW....", "..WWWWWWWWWWW...",
-    "..WWWWWWWWWWW...", "..WWWWW.WWWWW...", "...WWW.W.WWW....", ".......W........", "......WWW.......", ".....WWWWW......"],
-  cross: ["......WW......", "......WW......", "...WWWWWWWW...", "...WWWWWWWW...", "......WW......", "......WW......",
-    "......WW......", "......WW......", "......WW......", "......WW......", "......LL......"],
-  bone: [".WW..........WW.", "WWWW........WWWW", ".WWWWWWWWWWWWWW.", ".WWWWWWWWWWWWWW.", "WWWW........WWWW", ".WW..........WW."],
-  ring: ["......R.......", ".....RWR......", "......R.......", "....LLLLL.....", "...L.....L....", "..L.......L...",
-    "..L.......L...", "..L.......L...", "...L.....L....", "....LLLLL....."],
-  dagger: ["......W.......", ".....WWL......", ".....WWL......", ".....WWL......", ".....WWL......", ".....WWL......",
-    ".....WWL......", "...LLLLLLL....", "......G.......", "......G.......", "......G.......", ".....LLL......"],
-  urn: [".....LLLLL.....", "......WWW......", ".....WWWWW.....", "....WWWWWWW....", "...WWWLWWWWW...", "...WWWLWWWWW...",
-    "...WWWWWWWWW...", "....WWWWWWW....", ".....WWWWW.....", "......WWW......", ".....LLLLL....."],
-  goblet: ["...WWWWWWWWW...", "...WRRRRRRRW...", "...WRRRRRRRW...", "....WRRRRRW....", ".....WWWWW.....", ".......W.......",
-    ".......W.......", ".......W.......", ".....WWWWW.....", "....LLLLLLL...."],
-  crown: ["..W....W....W..", "..WW..WWW..WW..", "..WWWWWWWWWWW..", "..WWRWWWWWRWW..", "..WWWWWRWWWWW..", "..WWWWWWWWWWW..", "..LLLLLLLLLLL.."],
-  heart: ["..RRR...RRR..", ".RRRRR.RRRRR.", ".RWRRRRRRRRR.", ".RRRRRRRRRRR.", "..RRRRRRRRR..", "...RRRRRRR...", "....RRRRR....", ".....RRR.....", "......R......"],
+// Game icons. They used to be system emoji, which look different on every OS (and are missing on
+// some), so each one is drawn here with shaded vector shapes on a 112px canvas, shrunk to 28px and
+// run through crunch() - the same soft, grey, low-res look the emoji had, identical on every device.
+const ICON_SIZE = 112;
+function grad(x, x0, y0, x1, y1, stops) {
+  const g = x.createLinearGradient(x0, y0, x1, y1);
+  stops.forEach(([o, c]) => g.addColorStop(o, c));
+  return g;
+}
+function rgrad(x, cx, cy, r0, r1, stops) {
+  const g = x.createRadialGradient(cx, cy, r0, cx, cy, r1);
+  stops.forEach(([o, c]) => g.addColorStop(o, c));
+  return g;
+}
+function shape(x, fill, stroke, lw, build) {
+  x.beginPath(); build(); x.closePath();
+  x.fillStyle = fill; x.fill();
+  if (stroke) { x.lineWidth = lw; x.strokeStyle = stroke; x.lineJoin = "round"; x.stroke(); }
+}
+const BONE = [[0, "#fbf6e8"], [.6, "#d8d0bc"], [1, "#8a8270"]];
+const METAL = [[0, "#ffffff"], [.45, "#c8c8c8"], [1, "#6a6a6a"]];
+const ICON_DRAW = {
+  skull(x) {
+    shape(x, rgrad(x, 44, 34, 6, 60, BONE), "#3a3a3a", 3, () => {
+      x.moveTo(20, 54); x.bezierCurveTo(16, 16, 96, 16, 92, 54); x.bezierCurveTo(92, 68, 84, 74, 80, 76);
+      x.lineTo(80, 92); x.lineTo(32, 92); x.lineTo(32, 76); x.bezierCurveTo(26, 74, 20, 68, 20, 54);
+    });
+    x.fillStyle = "#2a2a2a";
+    for (const ex of [40, 72]) { x.beginPath(); x.ellipse(ex, 56, 11, 12, 0, 0, Math.PI * 2); x.fill(); }
+    x.beginPath(); x.moveTo(56, 64); x.lineTo(50, 76); x.lineTo(62, 76); x.closePath(); x.fill();
+    x.strokeStyle = "#3a3a3a"; x.lineWidth = 3;
+    for (let tx = 40; tx <= 72; tx += 8) { x.beginPath(); x.moveTo(tx, 82); x.lineTo(tx, 92); x.stroke(); }
+    x.beginPath(); x.moveTo(32, 84); x.lineTo(80, 84); x.stroke();
+  },
+  candle(x) {
+    x.fillStyle = rgrad(x, 56, 26, 2, 30, [[0, "rgba(255,240,200,.9)"], [1, "rgba(255,240,200,0)"]]);
+    x.fillRect(20, 0, 72, 60);
+    shape(x, rgrad(x, 56, 30, 2, 16, [[0, "#ffffff"], [.5, "#ffe080"], [1, "#e08020"]]), null, 0, () => {
+      x.moveTo(56, 6); x.bezierCurveTo(66, 20, 66, 34, 56, 38); x.bezierCurveTo(46, 34, 46, 20, 56, 6);
+    });
+    x.fillStyle = "#2a2a2a"; x.fillRect(54, 36, 4, 8);
+    shape(x, grad(x, 40, 0, 72, 0, [[0, "#cfc6b0"], [.35, "#fbf6e8"], [1, "#a8a090"]]), "#5a5448", 2.5, () => {
+      x.moveTo(40, 46); x.lineTo(72, 46); x.lineTo(72, 92); x.lineTo(40, 92);
+    });
+    shape(x, "#fbf6e8", null, 0, () => { x.moveTo(40, 46); x.lineTo(50, 46); x.quadraticCurveTo(48, 62, 44, 64); x.quadraticCurveTo(40, 60, 40, 52); });
+    shape(x, grad(x, 0, 90, 0, 106, METAL), "#3a3a3a", 2.5, () => {
+      x.moveTo(22, 92); x.lineTo(90, 92); x.quadraticCurveTo(92, 104, 56, 106); x.quadraticCurveTo(20, 104, 22, 92);
+    });
+  },
+  key(x) {
+    const fill = grad(x, 0, 30, 0, 80, [[0, "#ffffff"], [.5, "#e4e4e4"], [1, "#9a9a9a"]]);
+    x.lineWidth = 11; x.strokeStyle = fill;
+    x.beginPath(); x.arc(30, 56, 17, 0, Math.PI * 2); x.stroke();
+    x.lineWidth = 2; x.strokeStyle = "#3a2e14"; x.beginPath(); x.arc(30, 56, 23, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.arc(30, 56, 11, 0, Math.PI * 2); x.stroke();
+    shape(x, fill, "#3a2e14", 2, () => { x.moveTo(50, 51); x.lineTo(104, 51); x.lineTo(104, 61); x.lineTo(50, 61); });
+    shape(x, fill, "#3a2e14", 2, () => { x.moveTo(84, 61); x.lineTo(84, 76); x.lineTo(92, 76); x.lineTo(92, 68); x.lineTo(98, 68); x.lineTo(98, 61); });
+  },
+  rose(x) {
+    shape(x, grad(x, 0, 60, 0, 108, [[0, "#a8d098"], [1, "#6a9a5a"]]), "#1e2e18", 2, () => {
+      x.moveTo(54, 58); x.quadraticCurveTo(50, 84, 58, 106); x.lineTo(62, 106); x.quadraticCurveTo(56, 84, 60, 58);
+    });
+    shape(x, "#5a8a4a", "#1e2e18", 2, () => { x.moveTo(57, 82); x.quadraticCurveTo(76, 70, 88, 76); x.quadraticCurveTo(76, 88, 57, 86); });
+    shape(x, "#5a8a4a", "#1e2e18", 2, () => { x.moveTo(56, 92); x.quadraticCurveTo(38, 84, 28, 90); x.quadraticCurveTo(40, 100, 56, 96); });
+    const petal = rgrad(x, 50, 26, 2, 34, [[0, "#ffd0d0"], [.5, "#f06060"], [1, "#a02020"]]);
+    shape(x, petal, "#3a0404", 2.5, () => {
+      x.moveTo(56, 62); x.bezierCurveTo(30, 60, 24, 34, 34, 20); x.quadraticCurveTo(44, 26, 46, 18); x.quadraticCurveTo(56, 10, 66, 18);
+      x.quadraticCurveTo(70, 26, 78, 20); x.bezierCurveTo(88, 34, 82, 60, 56, 62);
+    });
+    x.strokeStyle = "#5a0808"; x.lineWidth = 2.5;
+    x.beginPath(); x.moveTo(42, 34); x.bezierCurveTo(48, 50, 66, 50, 70, 32); x.stroke();
+    x.beginPath(); x.moveTo(50, 28); x.bezierCurveTo(54, 38, 62, 36, 62, 26); x.stroke();
+  },
+  bell(x) {
+    // a squat, wide church bell
+    shape(x, grad(x, 14, 0, 98, 0, [[0, "#8a6a28"], [.3, "#ffe8a0"], [.55, "#d8b050"], [1, "#6a4a18"]]), "#3a2a0a", 3, () => {
+      x.moveTo(56, 26); x.bezierCurveTo(84, 26, 86, 44, 86, 58); x.bezierCurveTo(86, 70, 92, 78, 104, 84);
+      x.lineTo(8, 84); x.bezierCurveTo(20, 78, 26, 70, 26, 58); x.bezierCurveTo(26, 44, 28, 26, 56, 26);
+    });
+    shape(x, grad(x, 0, 82, 0, 92, METAL), "#3a2a0a", 2.5, () => { x.moveTo(4, 82); x.lineTo(108, 82); x.lineTo(106, 92); x.lineTo(6, 92); });
+    x.fillStyle = rgrad(x, 54, 96, 1, 10, [[0, "#fff0c0"], [1, "#8a6a28"]]); x.beginPath(); x.arc(56, 98, 8, 0, Math.PI * 2); x.fill();
+    x.fillStyle = "#6a4a18"; x.beginPath(); x.arc(56, 22, 7, 0, Math.PI * 2); x.fill();
+    x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 4; x.beginPath(); x.moveTo(42, 36); x.quadraticCurveTo(36, 52, 36, 74); x.stroke();
+  },
+  knife(x) {
+    x.save(); x.translate(56, 56); x.rotate(-Math.PI / 4);
+    shape(x, grad(x, 0, -10, 0, 10, [[0, "#ffffff"], [.5, "#c8c8c8"], [1, "#7a7a7a"]]), "#3a3a3a", 2.5, () => {
+      x.moveTo(-8, -9); x.lineTo(44, -9); x.quadraticCurveTo(52, -6, 54, 0); x.lineTo(54, 2); x.lineTo(-8, 9);
+    });
+    x.strokeStyle = "#8a8a8a"; x.lineWidth = 2; x.beginPath(); x.moveTo(-4, -3); x.lineTo(46, -3); x.stroke();
+    shape(x, grad(x, 0, -9, 0, 9, [[0, "#8a5a38"], [1, "#3a2010"]]), "#1e1008", 2.5, () => { x.moveTo(-50, -8); x.lineTo(-8, -8); x.lineTo(-8, 8); x.lineTo(-50, 8); });
+    x.fillStyle = "#e0e0e0"; for (const rx of [-40, -26, -14]) { x.beginPath(); x.arc(rx, 0, 2.6, 0, Math.PI * 2); x.fill(); }
+    x.restore();
+  },
+  spade(x) {
+    shape(x, rgrad(x, 44, 36, 4, 60, [[0, "#ffffff"], [.5, "#c8c8c8"], [1, "#6a6a6a"]]), "#2a2a2a", 3, () => {
+      x.moveTo(56, 8); x.bezierCurveTo(70, 30, 98, 42, 98, 64); x.bezierCurveTo(98, 82, 76, 88, 62, 74);
+      x.quadraticCurveTo(64, 92, 74, 102); x.lineTo(38, 102); x.quadraticCurveTo(48, 92, 50, 74);
+      x.bezierCurveTo(36, 88, 14, 82, 14, 64); x.bezierCurveTo(14, 42, 42, 30, 56, 8);
+    });
+  },
+  cross(x) {
+    shape(x, grad(x, 30, 0, 82, 0, [[0, "#8a8a8a"], [.4, "#f0f0f0"], [1, "#6a6a6a"]]), "#2a2a2a", 3, () => {
+      x.moveTo(48, 6); x.lineTo(64, 6); x.lineTo(64, 30); x.lineTo(88, 30); x.lineTo(88, 46); x.lineTo(64, 46);
+      x.lineTo(64, 106); x.lineTo(48, 106); x.lineTo(48, 46); x.lineTo(24, 46); x.lineTo(24, 30); x.lineTo(48, 30);
+    });
+  },
+  bone(x) {
+    x.save(); x.translate(56, 56); x.rotate(-Math.PI / 6);
+    const fill = grad(x, 0, -14, 0, 14, BONE);
+    shape(x, fill, "#5a5448", 2.5, () => { x.moveTo(-34, -8); x.lineTo(34, -8); x.lineTo(34, 8); x.lineTo(-34, 8); });
+    x.fillStyle = fill; x.strokeStyle = "#5a5448"; x.lineWidth = 2.5;
+    for (const [bx, by] of [[-38, -9], [-38, 9], [38, -9], [38, 9]]) { x.beginPath(); x.arc(bx, by, 11, 0, Math.PI * 2); x.fill(); x.stroke(); }
+    x.fillRect(-34, -6, 68, 12);
+    x.restore();
+  },
+  ring(x) {
+    x.lineWidth = 12; x.strokeStyle = grad(x, 20, 40, 92, 100, [[0, "#fff0c0"], [.5, "#c8a050"], [1, "#6a4a18"]]);
+    x.beginPath(); x.ellipse(56, 70, 28, 26, 0, 0, Math.PI * 2); x.stroke();
+    x.lineWidth = 2; x.strokeStyle = "#3a2a0a";
+    x.beginPath(); x.ellipse(56, 70, 34, 32, 0, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.ellipse(56, 70, 22, 20, 0, 0, Math.PI * 2); x.stroke();
+    shape(x, rgrad(x, 50, 26, 2, 22, [[0, "#ffffff"], [.4, "#ff6060"], [1, "#6a0808"]]), "#2a0404", 2.5, () => {
+      x.moveTo(42, 32); x.lineTo(70, 32); x.lineTo(78, 40); x.lineTo(56, 60); x.lineTo(34, 40);
+    });
+    x.strokeStyle = "rgba(255,255,255,.6)"; x.lineWidth = 2; x.beginPath(); x.moveTo(34, 40); x.lineTo(78, 40); x.moveTo(48, 32); x.lineTo(56, 60); x.lineTo(64, 32); x.stroke();
+  },
+  dagger(x) {
+    shape(x, grad(x, 46, 0, 66, 0, [[0, "#7a7a7a"], [.45, "#ffffff"], [1, "#8a8a8a"]]), "#3a3a3a", 2.5, () => {
+      x.moveTo(56, 4); x.lineTo(65, 18); x.lineTo(63, 66); x.lineTo(49, 66); x.lineTo(47, 18);
+    });
+    x.strokeStyle = "#9a9a9a"; x.lineWidth = 2; x.beginPath(); x.moveTo(56, 10); x.lineTo(56, 64); x.stroke();
+    shape(x, grad(x, 0, 64, 0, 74, [[0, "#f0e0b0"], [1, "#6a5428"]]), "#3a2e14", 2.5, () => { x.moveTo(30, 66); x.lineTo(82, 66); x.lineTo(78, 74); x.lineTo(34, 74); });
+    shape(x, grad(x, 50, 0, 62, 0, [[0, "#3a2010"], [.5, "#8a5a38"], [1, "#3a2010"]]), "#1e1008", 2.5, () => { x.moveTo(50, 74); x.lineTo(62, 74); x.lineTo(62, 96); x.lineTo(50, 96); });
+    x.fillStyle = rgrad(x, 54, 100, 1, 9, [[0, "#ff8a8a"], [1, "#6a0808"]]); x.beginPath(); x.arc(56, 102, 7, 0, Math.PI * 2); x.fill();
+  },
+  urn(x) {
+    const clay = grad(x, 26, 0, 86, 0, [[0, "#6a6a6a"], [.35, "#e0e0e0"], [1, "#4a4a4a"]]);
+    x.lineWidth = 6; x.strokeStyle = "#8a8a8a";
+    x.beginPath(); x.moveTo(40, 28); x.bezierCurveTo(18, 28, 18, 52, 32, 54); x.stroke();
+    x.beginPath(); x.moveTo(72, 28); x.bezierCurveTo(94, 28, 94, 52, 80, 54); x.stroke();
+    shape(x, clay, "#2a2a2a", 3, () => {
+      x.moveTo(42, 20); x.lineTo(70, 20); x.lineTo(66, 34); x.bezierCurveTo(92, 44, 92, 80, 68, 94);
+      x.lineTo(74, 104); x.lineTo(38, 104); x.lineTo(44, 94); x.bezierCurveTo(20, 80, 20, 44, 46, 34);
+    });
+    shape(x, grad(x, 0, 12, 0, 22, METAL), "#2a2a2a", 2.5, () => { x.moveTo(36, 14); x.lineTo(76, 14); x.lineTo(74, 22); x.lineTo(38, 22); });
+    x.strokeStyle = "#3a3a3a"; x.lineWidth = 3;
+    x.beginPath(); x.moveTo(30, 56); x.quadraticCurveTo(56, 64, 82, 56); x.stroke();
+    x.beginPath(); x.moveTo(32, 74); x.quadraticCurveTo(56, 82, 80, 74); x.stroke();
+  },
+  goblet(x) {
+    const gold = grad(x, 20, 0, 92, 0, [[0, "#6a4a18"], [.35, "#ffe8a0"], [1, "#6a4a18"]]);
+    shape(x, gold, "#3a2a0a", 3, () => { x.moveTo(20, 14); x.lineTo(92, 14); x.bezierCurveTo(92, 48, 76, 58, 62, 60); x.lineTo(50, 60); x.bezierCurveTo(36, 58, 20, 48, 20, 14); });
+    shape(x, rgrad(x, 50, 18, 2, 30, [[0, "#ff6060"], [.6, "#9a1010"], [1, "#4a0404"]]), null, 0, () => { x.moveTo(24, 18); x.lineTo(88, 18); x.bezierCurveTo(86, 30, 76, 34, 56, 34); x.bezierCurveTo(36, 34, 26, 30, 24, 18); });
+    shape(x, gold, "#3a2a0a", 2.5, () => { x.moveTo(51, 60); x.lineTo(61, 60); x.lineTo(60, 90); x.lineTo(52, 90); });
+    shape(x, gold, "#3a2a0a", 2.5, () => { x.moveTo(52, 88); x.lineTo(60, 88); x.lineTo(80, 100); x.lineTo(80, 106); x.lineTo(32, 106); x.lineTo(32, 100); });
+    x.fillStyle = "#9a1010"; x.beginPath(); x.moveTo(30, 34); x.quadraticCurveTo(26, 46, 30, 48); x.quadraticCurveTo(34, 46, 30, 34); x.fill();
+  },
+  crown(x) {
+    shape(x, grad(x, 0, 20, 0, 90, [[0, "#fff0c0"], [.5, "#d8b050"], [1, "#6a4a18"]]), "#3a2a0a", 3, () => {
+      x.moveTo(12, 86); x.lineTo(8, 32); x.lineTo(32, 56); x.lineTo(56, 22); x.lineTo(80, 56); x.lineTo(104, 32); x.lineTo(100, 86);
+    });
+    shape(x, grad(x, 0, 80, 0, 98, [[0, "#d8b050"], [1, "#5a3a10"]]), "#3a2a0a", 2.5, () => { x.moveTo(12, 82); x.lineTo(100, 82); x.lineTo(100, 98); x.lineTo(12, 98); });
+    for (const [gx, gy, r, col] of [[8, 30, 6, "#ffffff"], [56, 20, 7, "#ffffff"], [104, 30, 6, "#ffffff"], [32, 90, 5, "#c01c1c"], [56, 90, 6, "#c01c1c"], [80, 90, 5, "#c01c1c"]]) {
+      x.fillStyle = rgrad(x, gx - r / 3, gy - r / 3, 1, r, [[0, "#ffffff"], [1, col === "#ffffff" ? "#a8a8a8" : col]]);
+      x.beginPath(); x.arc(gx, gy, r, 0, Math.PI * 2); x.fill();
+    }
+  },
+  heart(x) {
+    shape(x, rgrad(x, 40, 34, 4, 70, [[0, "#ffe0e0"], [.4, "#f07070"], [1, "#a02828"]]), "#2a0202", 3, () => {
+      x.moveTo(56, 100); x.bezierCurveTo(20, 74, 6, 56, 10, 36); x.bezierCurveTo(14, 16, 44, 10, 56, 32);
+      x.bezierCurveTo(68, 10, 98, 16, 102, 36); x.bezierCurveTo(106, 56, 92, 74, 56, 100);
+    });
+    x.fillStyle = "rgba(255,255,255,.75)"; x.beginPath(); x.ellipse(32, 36, 7, 11, -.5, 0, Math.PI * 2); x.fill();
+  },
 };
-function pixelIcon(name, size = 16) {
-  const rows = ICONS[name], c = document.createElement("canvas");
-  c.width = c.height = size;
-  const x = c.getContext("2d");
-  const w = Math.max(...rows.map((r) => r.length));
-  const ox = Math.floor((size - w) / 2), oy = Math.floor((size - rows.length) / 2);
-  rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ICON_COLORS[ch]) { x.fillStyle = ICON_COLORS[ch]; x.fillRect(ox + i, oy + y, 1, 1); } }));
+// The bat is the one icon kept as flat 16x16 pixel art: white with red eyes, no grey crunch.
+const BAT_ICON = ["W......WW......W", "WW....WWWW....WW", "WWW..WRWWRW..WWW", "WWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWW",
+  ".WWWLWWWWWWLWWW.", "..WL.LWWWWL.LW..", "..L....WW....L..", ".......LL......."];
+function batIcon() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 16;
+  const x = c.getContext("2d"), pal = { W: "#ececec", L: "#a8a8a8", R: "#c01c1c" }, top = Math.floor((16 - BAT_ICON.length) / 2);
+  BAT_ICON.forEach((row, y) => [...row].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i, top + y, 1, 1); } }));
   return c.toDataURL();
+}
+// Draw large, shrink to 28px with smoothing, then crunch to the game's grey pixel palette.
+function pixelIcon(name, size = 28) {
+  if (name === "bat") return batIcon();
+  const big = document.createElement("canvas");
+  big.width = big.height = ICON_SIZE;
+  ICON_DRAW[name](big.getContext("2d"));
+  return sprite((x) => { x.imageSmoothingQuality = "high"; x.drawImage(big, 2, 2, size - 4, size - 4); }, size);
 }
 const SYMBOL_ICON = { rott: "skull", pug: "bat", poodle: "candle", guide: "key", bone: "rose", S: "bell" };
 function buildSprites() {
