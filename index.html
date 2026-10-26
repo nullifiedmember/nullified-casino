@@ -1099,17 +1099,60 @@ function stainedGlass(x, w, h) {
   x.restore();
   x.lineWidth = 2.2; x.strokeStyle = "#111"; x.stroke(arch);
 }
+// Hand-drawn 16x16 pixel icons. Emoji look different on every OS (and are missing on some), so every
+// game icon is drawn from these grids instead and looks the same everywhere. Rows are auto-centred.
+const ICON_COLORS = { W: "#ececec", L: "#a8a8a8", G: "#6e6e6e", K: "#111111", R: "#c01c1c", r: "#7a1010" };
+const ICONS = {
+  skull: ["....KKKKKKKK....", "...KWWWWWWWWK...", "..KWWWWWWWWWWK..", ".KWWWWWWWWWWWWK.", ".KWWWWWWWWWWWWK.", ".KWKKKWWWWKKKWK.",
+    ".KWKKKKWWKKKKWK.", ".KWKKKWWWWKKKWK.", ".KWWWWWKKWWWWWK.", "..KWWWWKKWWWWK..", "...KWWWWWWWWK...", "...KWKWKWKWWK...", "...KLWLWLWLWK...", "....KKKKKKKK...."],
+  bat: ["W......WW......W", "WW....WWWW....WW", "WWW..WRWWRW..WWW", "WWWWWWWWWWWWWWWW", "WWWWWWWWWWWWWWWW", ".WWWLWWWWWWLWWW.",
+    "..WL.LWWWWL.LW..", "..L....WW....L..", ".......LL......."],
+  candle: ["........W.......", ".......WWW......", ".......WRW......", "........W.......", "........K.......", "......WWWWW.....",
+    "......WWWWWL....", "......WWWWWL....", ".....LWWWWWL....", ".....LWWWWWL....", "......WWWWWL....", "......WWWWWL....", "....GGGGGGGGG...", "...GLLLLLLLLLG..", "....GGGGGGGGG..."],
+  key: ["..WWWW..........", ".WW..WW.........", "WW....WW........", "WW....WW........", ".WW..WW.........", "..WWWWLLLLLLLLLL",
+    "..........LL.LL.", "..........LL.LL.", "...............L"],
+  rose: ["......RRR.......", ".....RRrRR......", "....RRWRRRR.....", "....RrRRWRR.....", ".....RRrRR......", "......RRR.......",
+    ".......G........", "......GG...GG...", ".......G.GG.....", ".......GG.......", ".......G........", "......GG........", ".......G........"],
+  bell: [".......WW.......", "......WLLW......", ".....WWWWWW.....", "....WWWWWWLW....", "....WWWWWWLW....", "....WWWWWWLW....",
+    "...WWWWWWWWLW...", "...WWWWWWWWLW...", "..WWWWWWWWWWLW..", ".WWWWWWWWWWWWLW.", ".LLLLLLLLLLLLLL.", "......WWW.......", ".......W........"],
+  knife: [".............WW.", "............WWL.", "...........WWL..", "..........WWL...", ".........WWL....", "........WWL.....",
+    ".......WWL......", "......WWL.......", ".....RWL........", "....GLG.........", "...LGG..........", "..LGL...........", ".LGL............", "LG.............."],
+  spade: [".......W........", "......WWW.......", ".....WWWWW......", "....WWWWWWW.....", "...WWWWWWWWW....", "..WWWWWWWWWWW...",
+    "..WWWWWWWWWWW...", "..WWWWW.WWWWW...", "...WWW.W.WWW....", ".......W........", "......WWW.......", ".....WWWWW......"],
+  cross: ["......WW......", "......WW......", "...WWWWWWWW...", "...WWWWWWWW...", "......WW......", "......WW......",
+    "......WW......", "......WW......", "......WW......", "......WW......", "......LL......"],
+  bone: [".WW..........WW.", "WWWW........WWWW", ".WWWWWWWWWWWWWW.", ".WWWWWWWWWWWWWW.", "WWWW........WWWW", ".WW..........WW."],
+  ring: ["......R.......", ".....RWR......", "......R.......", "....LLLLL.....", "...L.....L....", "..L.......L...",
+    "..L.......L...", "..L.......L...", "...L.....L....", "....LLLLL....."],
+  dagger: ["......W.......", ".....WWL......", ".....WWL......", ".....WWL......", ".....WWL......", ".....WWL......",
+    ".....WWL......", "...LLLLLLL....", "......G.......", "......G.......", "......G.......", ".....LLL......"],
+  urn: [".....LLLLL.....", "......WWW......", ".....WWWWW.....", "....WWWWWWW....", "...WWWLWWWWW...", "...WWWLWWWWW...",
+    "...WWWWWWWWW...", "....WWWWWWW....", ".....WWWWW.....", "......WWW......", ".....LLLLL....."],
+  goblet: ["...WWWWWWWWW...", "...WRRRRRRRW...", "...WRRRRRRRW...", "....WRRRRRW....", ".....WWWWW.....", ".......W.......",
+    ".......W.......", ".......W.......", ".....WWWWW.....", "....LLLLLLL...."],
+  crown: ["..W....W....W..", "..WW..WWW..WW..", "..WWWWWWWWWWW..", "..WWRWWWWWRWW..", "..WWWWWRWWWWW..", "..WWWWWWWWWWW..", "..LLLLLLLLLLL.."],
+  heart: ["..RRR...RRR..", ".RRRRR.RRRRR.", ".RWRRRRRRRRR.", ".RRRRRRRRRRR.", "..RRRRRRRRR..", "...RRRRRRR...", "....RRRRR....", ".....RRR.....", "......R......"],
+};
+function pixelIcon(name, size = 16) {
+  const rows = ICONS[name], c = document.createElement("canvas");
+  c.width = c.height = size;
+  const x = c.getContext("2d");
+  const w = Math.max(...rows.map((r) => r.length));
+  const ox = Math.floor((size - w) / 2), oy = Math.floor((size - rows.length) / 2);
+  rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ICON_COLORS[ch]) { x.fillStyle = ICON_COLORS[ch]; x.fillRect(ox + i, oy + y, 1, 1); } }));
+  return c.toDataURL();
+}
+const SYMBOL_ICON = { rott: "skull", pug: "bat", poodle: "candle", guide: "key", bone: "rose", S: "bell" };
 function buildSprites() {
-  const emoji = (n) => `${Math.round(n * 0.82)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
   const frak = (n) => `${Math.round(n * 0.92)}px UnifrakturMaguntia, serif`;
   for (const [k, s] of Object.entries(SYMBOLS)) {
     if (k === "W") SPR[k] = sprite(stainedGlass, 22, 30);
     else if (s.royal) SPR[k] = glyph(s.face, frak, "#eeeeee");
-    else SPR[k] = glyph(s.face, emoji, "#fff");
+    else SPR[k] = pixelIcon(SYMBOL_ICON[k]);
   }
-  SPR.knife = glyph("🔪", emoji, "#fff");
-  SPR.cross = glyph("✝", (n) => `${Math.round(n * 0.9)}px Georgia, serif`, "#dddddd");
-  SPR.spade = glyph("♠", (n) => `${Math.round(n * 1.05)}px Georgia, serif`, "#eeeeee");
+  SPR.knife = pixelIcon("knife");
+  SPR.cross = pixelIcon("cross");
+  SPR.spade = pixelIcon("spade");
 }
 // Rasterise the inline cathedral SVG at 1/5 resolution and swap it for a pixelated canvas.
 async function pixelateBackdrop() {
@@ -1233,7 +1276,8 @@ function cellHtml(cell, extra = "") {
   if (cell.s === "S") return `<div class="cell scatter ${extra}">${img}<span class="tag">Колокол</span></div>`;
   return `<div class="cell ${sym.royal ? "royal" : ""} ${extra}">${img}</div>`;
 }
-function symLabel(s) { return s === "W" ? "витраж" : s === "S" ? "колокол" : SYMBOLS[s].face; }
+const SYMBOL_NAMES = { rott: "череп", pug: "мышь", poodle: "свеча", guide: "ключ", bone: "роза", W: "витраж", S: "колокол" };
+function symLabel(s) { return SYMBOL_NAMES[s] || SYMBOLS[s].face; }
 
 let state = { bet: 40, grid: spinGrid(false), busy: false, auto: false, fsLeft: 0, fsWin: 0, sticky: null, speed: 0 };
 const SPEEDS = [1, 0.5, 0.22];          // reel animation time multiplier: normal, fast, turbo
@@ -2365,10 +2409,8 @@ const cof = { sel: 0, phase: "idle", t0: 0, dist: 0, step: 0, tick: -1, won: nul
 const lootPay = (item, price) => Math.round(price * item.m * LOOT_K);
 const pickLoot = () => weighted(LOOT.map((l) => [l, l.w]));
 
-function buildLootSprites() {
-  const emoji = (n) => `${Math.round(n * 0.82)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
-  for (const l of LOOT) l.spr = glyph(l.face, emoji, "#fff");
-}
+const LOOT_ICON = ["bone", "candle", "key", "ring", "dagger", "urn", "goblet", "crown", "heart"];
+function buildLootSprites() { LOOT.forEach((l, i) => { l.spr = pixelIcon(LOOT_ICON[i]); }); }
 const lootCard = (l, price) => `<div class="loot" style="--rc:${l.rc}"><img src="${l.spr}" alt=""><i>${l.name}</i><b>${fmt(lootPay(l, price))}</b></div>`;
 function renderCof() {
   const c = COFFINS[cof.sel], busy = cof.phase === "spin";
