@@ -750,7 +750,7 @@
 
 <div class="duel view" id="duel">
   <div class="hall">
-    <div class="hall-head">Залы дуэлей <span>50 на 50 · комиссия 10%</span></div>
+    <div class="hall-head">Залы дуэлей <span>50 на 50 · комиссия 15%</span></div>
     <div class="rooms" id="duelRooms"></div>
   </div>
   <div class="arena">
@@ -2013,9 +2013,9 @@ $("withdrawBtn").onclick = () => openCash("withdraw");
 
 /* ---------- mines ---------- */
 // 25 slabs, N of them hide a bloody sword. Each safe slab raises the multiplier;
-// the fair multiplier for k safe picks is prod (25-i)/(25-N-i), minus a 10% house edge.
+// the fair multiplier for k safe picks is prod (25-i)/(25-N-i), minus a 15% house edge.
 const MINE_TILES = 25;
-const MINE_EDGE = 0.90;
+const MINE_EDGE = 0.85;
 const mines = { bet: 40, count: 3, active: false, knives: new Set(), opened: new Set(), boom: -1, revealed: false };
 
 function minesMultiplier(picks, count) {
@@ -2261,8 +2261,8 @@ bindBet("bjBet", "bjBetDown", "bjBetUp", bj, renderBJ);
 
 /* ---------- crash ---------- */
 // A bat climbs while the multiplier grows as e^(k·t) and drops at a random crash point.
-// P(point >= x) = 0.90 / x, so every cash-out strategy returns ~90%.
-const CRASH_EDGE = 0.90, CRASH_K = 0.14, CRASH_VIEW_DELAY = 700;
+// P(point >= x) = 0.85 / x, so every cash-out strategy returns ~85%.
+const CRASH_EDGE = 0.85, CRASH_K = 0.14, CRASH_VIEW_DELAY = 700;
 const CRASH_AUTO = [0, 1.2, 1.5, 2, 3, 5, 10, 25, 100];
 const CW = 192, CH = 108;
 const BAT = {
@@ -2511,10 +2511,10 @@ $("backCrash").onclick = () => show("hub");
 
 /* ---------- duel ---------- */
 // Two real players walk through the dark castle and a vampire takes one of them: exactly 50/50.
-// The survivor takes the pot of both stakes minus a 10% fee. Rooms, matching and the draw are on the
+// The survivor takes the pot of both stakes minus a 15% fee. Rooms, matching and the draw are on the
 // server: a player waits in a stake room until someone else walks in.
 const DUEL_STAKES = [100, 500, 1000, 5000, 25000, 95000];
-const DUEL_FEE = 0.10;
+const DUEL_FEE = 0.15;
 const DUEL_WALK = 2.8, DUEL_BITE = 3.9, DUEL_END = 4.6;      // scene timeline, seconds
 const duel = { rooms: DUEL_STAKES.map((stake) => ({ stake, waiting: null, waitingId: null })), phase: "hall", stake: 0, opp: "",
   youDie: false, prize: 0, t0: 0, resolved: false, hist: [], raf: 0 };
@@ -2709,10 +2709,10 @@ function duelFrame(now) {
 }
 
 /* ---------- upgrader ---------- */
-// Stake a sum and aim for x times more. Win chance = 0.90 / multiplier, drawn as the red arc on the dial.
+// Stake a sum and aim for x times more. Win chance = 0.85 / multiplier, drawn as the red arc on the dial.
 // The blade stops at a uniformly random angle, so the arc's share of the circle is exactly the chance.
 const UPG_MULTS = [1.2, 1.5, 2, 3, 5, 10, 20, 50, 100];
-const UPG_EDGE = 0.90, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
+const UPG_EDGE = 0.85, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
 const UPG_SPIN_MS = 3400;
 const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, t0: 0, angle: 180, tick: 0, res: null, hist: [], bannerTimer: 0 };
 const upgChance = () => UPG_EDGE / UPG_MULTS[upg.mult];
@@ -2853,7 +2853,7 @@ window.__simulateUpg = function (mi = 2, rounds = 300000) {
 /* ---------- coffins ---------- */
 // Case opening with coffins. Every case has its own nine items, but they sit on the same nine value
 // tiers (the server draws a tier), so each case returns the same share of its price; an item pays
-// price x multiplier, scaled by LOOT_K so the expected payout is exactly 90% of the case price.
+// price x multiplier, scaled by LOOT_K so the expected payout is exactly 75% of the case price.
 const LOOT = [
   { m: 0.2, w: 30, rc: "#3a3a3a" },
   { m: 0.5, w: 25, rc: "#4e4e4e" },
@@ -2880,7 +2880,7 @@ const CASE_ITEMS = [
 ];
 const CASE_LOOT = CASE_ITEMS.map((items) => items.map(([name, icon], i) => ({ ...LOOT[i], name, icon })));
 const LOOT_W = LOOT.reduce((a, l) => a + l.w, 0);
-const LOOT_K = 0.90 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
+const LOOT_K = 0.75 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
 const COFFINS = [
   { name: "Простой кейс", price: 100, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
   { name: "Обычный кейс", price: 500, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
