@@ -409,6 +409,30 @@
     background: linear-gradient(#a12a2a, #4a0e0e); border-color: #c94a4a; color: #fff; }
   .upg .next { text-align: center; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .065); color: #bdbdbd; line-height: 1.8; min-height: 3.6em; }
 
+  /* wheel of fortune: reuses the upgrader's dial layout */
+  .wpicks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .wpicks button { padding: 10px 0 8px; font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .07); line-height: 1.6;
+    background: #0b0b0b; border: 2px solid var(--wc); color: #e8e8e8; cursor: pointer; }
+  .wpicks button small { display: block; font-size: .7em; color: #8a8a8a; }
+  .wpicks button.on { background: #222; color: #fff; box-shadow: 0 0 0 2px var(--wc), 0 0 16px var(--wc); }
+  .wpicks button.on small { color: #e8e8e8; }
+  .wpicks button:disabled { opacity: .5; cursor: default; }
+
+  /* the last results over the wheel, newest on the left */
+  .wstrip { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; pointer-events: none; }
+  .wstrip span { font-family: "Press Start 2P", monospace; font-size: calc(var(--cell) * .055); padding: 4px 5px; background: #0c0c0c; border: 1px solid #333; }
+  .wstrip span:first-child { border-color: #bdbdbd; }
+  /* round history window */
+  .histcard { width: min(560px, 92vw); }
+  .hlist { max-height: 52vh; overflow-y: auto; margin: 6px 0 14px; border-top: 1px solid #333; }
+  .hrow { display: grid; grid-template-columns: 4.5em 1fr auto; gap: 4px 12px; padding: 7px 4px; border-bottom: 1px solid #222; align-items: center; }
+  .hrow b { font-family: "Press Start 2P", monospace; font-weight: 400; font-size: .9em; }
+  .hrow .hd { color: #8a8a8a; font-size: .9em; }
+  .hrow .hp { text-align: right; color: #fff; }
+  .hrow.you { background: rgba(160,40,40,.14); }
+  .hsum { display: flex; flex-wrap: wrap; gap: 6px; }
+  .hsum span { font-family: "Press Start 2P", monospace; font-size: .8em; padding: 4px 6px; background: #0c0c0c; border: 1px solid #333; }
+
   /* coffins */
   .cof { position: relative; z-index: 1; align-items: center; gap: calc(var(--cell) * .22); }
   .crypt { width: calc(var(--cell) * 5.2); height: calc(var(--cell) * 3.3); display: flex; flex-direction: column; gap: 10px; padding: 12px;
@@ -489,7 +513,7 @@
     .side .title { grid-column: 1 / -1; order: -1; }
     .side .spin { grid-column: 1 / -1; }
     .side .row, .side .msg { grid-column: 1 / -1; }
-    .crash, .duel, .upg, .cof { flex-direction: column; gap: calc(var(--cell) * .12); }
+    .crash, .duel, .upg, .cof, .whl { flex-direction: column; gap: calc(var(--cell) * .12); }
     .cplay { flex-direction: column; }
     .sky { width: calc(var(--cell) * 5.2); height: calc(var(--cell) * 2.9); }
     .players { width: auto; height: calc(var(--cell) * 1.3); }
@@ -667,6 +691,16 @@
       <h3>Coffins</h3>
       <p>Классические кейсы</p>
     </button>
+    <button class="door" id="doorWhl">
+      <img id="doorWhlImg" alt="">
+      <h3>Wheel</h3>
+      <p>Колесо фортуны</p>
+    </button>
+    <button class="door" id="doorJp">
+      <img id="doorJpImg" alt="">
+      <h3>Roulette</h3>
+      <p>Банк забирает один</p>
+    </button>
   </div>
   <button class="arrow" id="doorsNext" aria-label="Следующие игры">&gt;</button>
   </div>
@@ -812,6 +846,60 @@
   </div>
 </div>
 
+<div class="upg view" id="whl">
+  <div class="players">
+    <div class="phead"><span>Игроки <b id="wCount">0</b></span><span>Ставки <b id="wTotal">0</b></span></div>
+    <div class="plist" id="wList"></div>
+  </div>
+  <div class="dialwrap">
+    <div class="wstrip" id="wStrip"></div>
+    <canvas class="px" id="wCanvas" width="160" height="160"></canvas>
+    <div class="ucenter"><b id="wCenter">x2</b><span id="wTarget"></span></div>
+    <div class="ures" id="wRes"></div>
+  </div>
+  <div class="side">
+    <div class="title"><span id="whlTitle"></span><small>Wheel</small></div>
+    <div class="plate"><div class="lbl">Баланс</div><div class="val" id="wBal">0</div></div>
+    <div class="plate betctl">
+      <button id="wBetDown" aria-label="Меньше">−</button>
+      <div><div class="lbl">Ставка</div><input class="val betin" id="wBet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
+      <button id="wBetUp" aria-label="Больше">+</button>
+    </div>
+    <div class="wpicks" id="wPicks"></div>
+    <button class="go" id="wGo">Поставить</button>
+    <div class="next" id="wNext">Одно колесо на всех. Ставь на множители, пока идёт отсчёт: где колесо остановится, те ставки и умножатся</div>
+    <button class="back" id="wHistBtn">История</button>
+    <button class="back" id="backWhl">← В собор</button>
+  </div>
+</div>
+
+<div class="upg view" id="jp">
+  <div class="players">
+    <div class="phead"><span>Игроки <b id="jCount">0</b></span><span>Банк <b id="jTotal">0</b></span></div>
+    <div class="plist" id="jList"></div>
+  </div>
+  <div class="dialwrap">
+    <canvas class="px" id="jCanvas" width="160" height="160"></canvas>
+    <div class="ucenter"><b id="jCenter">…</b><span id="jSub"></span></div>
+    <div class="ures" id="jRes"></div>
+  </div>
+  <div class="side">
+    <div class="title"><span id="jpTitle"></span><small>Roulette</small></div>
+    <div class="plate"><div class="lbl">Баланс</div><div class="val" id="jBal">0</div></div>
+    <div class="plate betctl">
+      <button id="jBetDown" aria-label="Меньше">−</button>
+      <div><div class="lbl">Ставка · до 95 000</div><input class="val betin" id="jBet" type="text" inputmode="numeric" autocomplete="off" aria-label="Ставка"></div>
+      <button id="jBetUp" aria-label="Больше">+</button>
+    </div>
+    <button class="go" id="jGo">Поставить</button>
+    <button class="back" id="jLeave">Забрать ставку</button>
+    <div class="next" id="jNext">Ставки идут в общий банк, забирает его один. Шанс = твоя доля банка, но не больше 65%. Комиссия 20% с выигрыша</div>
+    <div class="dhist" id="jHist"></div>
+    <button class="back" id="jHistBtn">История выигрышей</button>
+    <button class="back" id="backJp">← В собор</button>
+  </div>
+</div>
+
 <div class="cof view" id="cof">
   <div class="crypt">
     <div class="coffins" id="cofList"></div>
@@ -849,6 +937,13 @@
   <p><a href="https://huevo.su/apps/223" target="_top">Открыть игру на huEVO</a></p>
 </div></div>
 <div class="toast" id="toast"></div>
+
+<div class="modal" id="histModal"><div class="card histcard">
+  <h2 id="histTitle">История</h2>
+  <p id="histSum"></p>
+  <div class="hlist" id="histList"></div>
+  <button id="histClose">Закрыть</button>
+</div></div>
 
 <div class="modal" id="ptModal"><div class="card">
   <h2>Скрижаль выплат</h2>
@@ -1152,7 +1247,7 @@ const Wallet = {
   },
 };
 function refreshBalances() {
-  for (const id of ["bal", "hubBal", "mBal", "bjBal", "cBal", "dBal", "uBal", "cBal2"]) {
+  for (const id of ["bal", "hubBal", "mBal", "bjBal", "cBal", "dBal", "uBal", "wBal", "jBal", "cBal2"]) {
     const el = document.getElementById(id);
     if (el) el.textContent = fmt(Wallet.value);
   }
@@ -1200,6 +1295,9 @@ function pollDelay() {
   if (document.hidden) return 60000;
   if (view === "crash") return crash.phase === "fly" ? 250 : 1500;
   if (view === "duel") return duel.phase === "wait" ? 1000 : 5000;
+  // the wheel: other players' bets every 1.5 s, and a poll right after the bets close to learn the sector
+  if (view === "whl") return whlOpen() ? Math.max(150, Math.min(1500, whl.betEnds - whlNow() + 150)) : 1500;
+  if (view === "jp") return jp.phase === "bet" ? Math.max(150, Math.min(1500, jp.betEnds - jpNow() + 150)) : 1500;
   return 20000;
 }
 function pollNow() { if (Net.wake) Net.wake(); }
@@ -1213,12 +1311,14 @@ async function pollLoop() {
   for (;;) {
     const seq = Net.seq, sent = Date.now();
     try {
-      const j = await api("/api/poll", { since: Net.lastWin, crash: view === "crash", duel: view === "duel" });
+      const j = await api("/api/poll", { since: Net.lastWin, crash: view === "crash", duel: view === "duel", wheel: view === "whl", jp: view === "jp" });
       Net.live = true;
       if (j.now) Net.offset = j.now - (sent + Date.now()) / 2;
       takeWins(j.wins);
       if (j.crash) crashOnState(j.crash, (sent + Date.now()) / 2);
       if (j.duel) duelOnPoll(j.duel, j.balance);
+      if (j.wheel) whlOnState(j.wheel, (sent + Date.now()) / 2);
+      if (j.jp) jpOnState(j.jp, (sent + Date.now()) / 2);
       if (seq === Net.seq && Date.now() > Net.holdUntil) Wallet.set(j.balance, true);
     } catch { Net.live = false; }
     await pollWait(pollDelay());
@@ -1778,6 +1878,8 @@ function pixelateTitle() {
   $("duelTitle").replaceWith(titleCanvas());
   $("upgTitle").replaceWith(titleCanvas());
   $("cofTitle").replaceWith(titleCanvas());
+  $("whlTitle").replaceWith(titleCanvas());
+  $("jpTitle").replaceWith(titleCanvas());
 }
 
 function cellHtml(cell, extra = "") {
@@ -1946,9 +2048,11 @@ let view = "hub";
 function show(next) {
   view = next;
   pollNow();
-  for (const id of ["hub", "slots", "mines", "bj", "crash", "duel", "upg", "cof"]) $(id).classList.toggle("on", id === next);
+  for (const id of ["hub", "slots", "mines", "bj", "crash", "duel", "upg", "whl", "jp", "cof"]) $(id).classList.toggle("on", id === next);
+  if (next === "jp") renderJp();
   if (next === "duel") renderRooms();
   if (next === "upg") renderUpg();
+  if (next === "whl") renderWhl();
   if (next === "cof") renderCof();
   if (next === "slots") {
     const svg = document.querySelector(".nave svg.arch");
@@ -2893,6 +2997,404 @@ $("uMultUp").onclick = () => { upg.mult = Math.min(UPG_MULTS.length - 1, upg.mul
 $("uGo").onclick = spinUpg;
 $("doorUpg").onclick = () => show("upg");
 $("backUpg").onclick = () => show("hub");
+/* ---------- wheel of fortune ---------- */
+// 50 sectors: 20 × x2, 8 × x5, 4 × x10, 2 × x20, 16 skulls. Shared rounds, like Crash: everyone bets on one or
+// more multipliers while the round takes bets, then one spin decides for all and a hit pays bet × the pick.
+// Chance = count / 50, so every pick returns 80% on average. The server draws the sector in secret and
+// reveals it when the bets close; the page only turns the wheel to it. The layout must match WHEEL on the server.
+const WHEEL_PICKS = [2, 5, 10, 20];
+const WHEEL_COLOR = { 0: "#0b0b0b", 2: "#7a7a7a", 5: "#a12a2a", 10: "#d8d8d8", 20: "#e3b04b" };
+const WHEEL = (() => {
+  const w = new Array(50).fill(0), place = (mult, every, from) => { for (let i = from; i < 50; i += every) w[i] = mult; };
+  place(2, 5, 0); place(2, 5, 2); place(5, 25, 1); place(5, 25, 6); place(5, 25, 11); place(5, 25, 16);
+  place(10, 25, 3); place(10, 25, 13); place(20, 25, 21);
+  return w;
+})();
+const WSEG = 360 / WHEEL.length, WHEEL_ANIM_MS = 5200;
+// shownId: the round whose result this page has already played out; offset: server clock - ours
+const whl = { bet: 100, pick: 2, id: 0, phase: "", betEnds: 0, spinMs: 6000, offset: 0, seg: null, bets: [], hist: [],
+  rot: 0, from: 0, to: 0, t0: 0, dur: 0, anim: false, tick: 0, shownId: 0, bannerTimer: 0, pending: false };
+const wheelCount = (m) => WHEEL.filter((v) => v === m).length;
+
+// sector i covers [i·WSEG, (i+1)·WSEG) clockwise from the top of the wheel; rot turns the whole wheel
+function drawWheel(x, size, rot, pick) {
+  const c = size / 2, R = c - 3, toR = (deg) => (deg - 90) * Math.PI / 180;
+  x.clearRect(0, 0, size, size);
+  x.fillStyle = "#151515"; x.beginPath(); x.arc(c, c, c - 1, 0, Math.PI * 2); x.fill();
+  const glow = 0.9;
+  WHEEL.forEach((m, i) => {
+    const a0 = i * WSEG + rot, a1 = a0 + WSEG;
+    x.fillStyle = WHEEL_COLOR[m];
+    x.globalAlpha = pick && m !== pick && m !== 0 ? 0.45 : 1;
+    x.beginPath(); x.moveTo(c, c); x.arc(c, c, R, toR(a0), toR(a1)); x.closePath(); x.fill();
+    x.globalAlpha = 1;
+    // a bone-white dot on each sector of the picked multiplier
+    if (pick && m === pick) {
+      const am = toR(a0 + WSEG / 2), r = R - 6;
+      x.fillStyle = `rgba(255,255,255,${glow})`; x.fillRect(Math.round(c + r * Math.cos(am)) - 1, Math.round(c + r * Math.sin(am)) - 1, 2, 2);
+    }
+  });
+  // thin black spokes between sectors
+  x.strokeStyle = "#000"; x.lineWidth = 1;
+  for (let i = 0; i < WHEEL.length; i++) { const a = toR(i * WSEG + rot); x.beginPath(); x.moveTo(c + 22 * Math.cos(a), c + 22 * Math.sin(a)); x.lineTo(c + R * Math.cos(a), c + R * Math.sin(a)); x.stroke(); }
+  x.strokeStyle = "#6a6a6a"; x.lineWidth = 2; x.beginPath(); x.arc(c, c, R, 0, Math.PI * 2); x.stroke();
+  // hub
+  const g = x.createRadialGradient(c, c, 2, c, c, R * 0.62);
+  g.addColorStop(0, "#202020"); g.addColorStop(1, "#090909");
+  x.fillStyle = g; x.beginPath(); x.arc(c, c, R * 0.62, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = "#3a3a3a"; x.lineWidth = 2; x.beginPath(); x.arc(c, c, R * 0.62, 0, Math.PI * 2); x.stroke();
+}
+function drawWhl() {
+  const x = $("wCanvas").getContext("2d"), c = 80;
+  drawWheel(x, 160, whl.rot, whl.pick);
+  // the pointer: a bloody blade hanging over the top sector
+  x.fillStyle = "#e8e8e8";
+  x.beginPath(); x.moveTo(c, 14); x.lineTo(c - 5, 1); x.lineTo(c + 5, 1); x.closePath(); x.fill();
+  x.fillStyle = "#c01c1c"; x.fillRect(c - 1, 10, 2, 3);
+}
+// door icon: a few big coloured sectors, a silver rim and a see-through hub, nothing dark, so it sits on the
+// door like the other icons
+function wheelIcon() {
+  const S = 28, k = document.createElement("canvas"); k.width = k.height = S;
+  const x = k.getContext("2d"), c = S / 2, R = 12, toR = (deg) => (deg - 90) * Math.PI / 180;
+  const ring = [2, 5, 2, 10, 2, 5, 2, 20];
+  ring.forEach((m, i) => {
+    x.fillStyle = WHEEL_COLOR[m];
+    x.beginPath(); x.moveTo(c, c); x.arc(c, c, R, toR(i * 45), toR(i * 45 + 45)); x.closePath(); x.fill();
+  });
+  x.globalCompositeOperation = "destination-out";
+  x.beginPath(); x.arc(c, c, 4.5, 0, Math.PI * 2); x.fill();
+  x.globalCompositeOperation = "source-over";
+  x.strokeStyle = "#e8e8e8"; x.lineWidth = 1.5;
+  x.beginPath(); x.arc(c, c, R, 0, Math.PI * 2); x.stroke();
+  x.beginPath(); x.arc(c, c, 4.5, 0, Math.PI * 2); x.stroke();
+  // the pointer on top
+  x.fillStyle = "#e8e8e8"; x.beginPath(); x.moveTo(c, 5); x.lineTo(c - 3, 0); x.lineTo(c + 3, 0); x.closePath(); x.fill();
+  crunch(x, S, S);
+  return k.toDataURL();
+}
+const whlNow = () => Date.now() + whl.offset;
+const whlOpen = () => whl.phase === "bet" && whlNow() < whl.betEnds;
+const whlMine = () => whl.bets.filter((b) => Net.user && b.id === Net.user.id);
+const whlLabel = (m) => (m ? "x" + m : "☠");
+function whlOnState(m, localAt) {
+  whl.offset = m.now - localAt;
+  if (m.id !== whl.id) {
+    whl.id = m.id;
+    if (!whl.anim) { clearTimeout(whl.bannerTimer); $("wRes").className = "ures"; $("wRes").parentElement.classList.remove("burned", "blessed"); }
+  }
+  Object.assign(whl, { phase: m.phase, betEnds: m.betEnds, spinMs: m.spinMs, seg: m.seg, bets: m.bets || [], hist: m.hist || [] });
+  if (m.seg !== null && whl.shownId !== m.id && !whl.anim) startWhlSpin();
+  renderWhl();
+}
+// the bets have closed and the sector is known: turn the wheel so it stops on it as the server's spin ends
+function startWhlSpin() {
+  const left = whl.betEnds + whl.spinMs - 700 - whlNow();
+  // bring the middle of the sector (give or take a little) under the pointer at the top
+  const land = (whl.seg + 0.5 + (Math.random() - 0.5) * 0.7) * WSEG, target = (360 - land) % 360;
+  whl.from = whl.rot % 360;
+  if (left < 400) { whl.rot = target; finishWhl(); return; }        // came in late: just show where it stopped
+  whl.to = whl.from + 360 * 6 + ((target - whl.from + 360) % 360);
+  Object.assign(whl, { anim: true, t0: performance.now(), dur: Math.min(WHEEL_ANIM_MS, left), tick: 0, animId: whl.id, animSeg: whl.seg, animBets: whlMine() });
+  clearTimeout(whl.bannerTimer);
+  $("wRes").className = "ures"; $("wRes").parentElement.classList.remove("burned", "blessed");
+  $("wNext").textContent = "Ставки закрыты. Колесо крутится…";
+  requestAnimationFrame(whlFrame);
+}
+function whlFrame(now) {
+  if (!whl.anim) return;
+  const p = Math.min(1, (now - whl.t0) / whl.dur), e = 1 - (1 - p) ** 4;
+  whl.rot = whl.from + (whl.to - whl.from) * e;
+  const tk = Math.floor(whl.rot / WSEG);
+  if (tk !== whl.tick) { whl.tick = tk; if (view === "whl") Sfx.play("tick"); }
+  // the sector under the pointer, live in the centre
+  $("wCenter").textContent = whlLabel(WHEEL[Math.floor((((360 - whl.rot) % 360) + 360) % 360 / WSEG) % WHEEL.length]);
+  drawWhl();
+  if (p >= 1) finishWhl(); else requestAnimationFrame(whlFrame);
+}
+function renderWhl() {
+  const open = whlOpen(), mine = whlMine();
+  $("wBal").textContent = fmt(Wallet.get());
+  showBet("wBet", whl.bet, false);
+  // each button shows what everyone has put on that multiplier this round
+  const on = (m) => whl.bets.filter((b) => b.pick === m).reduce((a, b) => a + b.bet, 0);
+  $("wPicks").innerHTML = WHEEL_PICKS.map((m) =>
+    `<button data-m="${m}" class="${m === whl.pick ? "on" : ""}" style="--wc:${WHEEL_COLOR[m]}">x${m}<small>${on(m) ? fmt(on(m)) : wheelCount(m) * 2 + "%"}</small></button>`).join("");
+  $("wGo").disabled = !open || whl.pending;
+  $("wGo").textContent = open ? "Поставить" : "Ставки закрыты";
+  $("wBetDown").disabled = whl.bet <= BET_MIN;
+  $("wBetUp").disabled = whl.bet >= BET_MAX;
+  if (!whl.anim) {
+    if (open) $("wCenter").textContent = Math.max(0, Math.ceil((whl.betEnds - whlNow()) / 1000)) + "";
+    else if (whl.seg !== null && whl.shownId === whl.id) $("wCenter").textContent = whlLabel(WHEEL[whl.seg]);
+    else if (!whl.phase) $("wCenter").textContent = "…";
+  }
+  const staked = mine.reduce((a, b) => a + b.bet, 0);
+  $("wTarget").textContent = open ? (staked ? `твои ставки ${fmt(staked)}` : "делайте ставки") : whl.anim ? "крутится" : "следующий раунд";
+  // everyone's bets, biggest first; once the wheel has stopped, who hit and who missed
+  const done = whl.seg !== null && whl.shownId === whl.id, hit = done ? WHEEL[whl.seg] : -1;
+  $("wCount").textContent = new Set(whl.bets.map((b) => b.id)).size;
+  $("wTotal").textContent = fmt(whl.bets.reduce((a, b) => a + b.bet, 0));
+  $("wList").innerHTML = whl.bets.length ? whl.bets.map((b) => {
+    const you = Net.user && b.id === Net.user.id, won = done && b.pick === hit;
+    const status = won ? `x${b.pick} · +${fmt(b.bet * b.pick)}` : done ? `x${b.pick} · мимо` : `на x${b.pick}`;
+    return `<div class="prow ${you ? "you" : ""} ${won ? "won" : done ? "lost" : ""}"><span class="pn">${escapeHtml(b.name)}</span>` +
+      `<span class="pb">${fmt(b.bet)}</span><span class="ps" style="color:${done ? "" : WHEEL_COLOR[b.pick]}">${status}</span></div>`;
+  }).join("") : `<div class="prow"><span class="ps">Ждём ставок</span></div>`;
+  $("wStrip").innerHTML = whl.hist.map((m) => `<span style="color:${m ? WHEEL_COLOR[m] : "#7a7a7a"}">${whlLabel(m)}</span>`).join("");
+  if (!whl.anim) drawWhl();
+}
+async function betWhl() {
+  if (!whlOpen() || whl.pending) return;
+  whl.bet = clampBet(whl.bet);
+  const bet = whl.bet, pick = whl.pick;
+  whl.pending = true; renderWhl();
+  try {
+    await api("/api/wheel/bet", { bet, pick });
+    $("wNext").textContent = `Ставка ${fmt(bet)} на x${pick} принята. Можно поставить и на другие множители`;
+    Sfx.play("coin");
+  } catch (e) { $("wNext").textContent = e.message; }
+  whl.pending = false; updateHud(); renderWhl(); pollNow();
+}
+// the countdown and the Bet button follow the clock between polls
+setInterval(() => { if (view === "whl" && !whl.anim) renderWhl(); }, 250);
+function showWhlBanner(win, title, sub) {
+  const el = $("wRes");
+  el.innerHTML = `<b>${title.toUpperCase()}</b><small>${sub}</small>`;
+  el.className = "ures on " + (win ? "win" : "lose");
+  el.parentElement.classList.add(win ? "blessed" : "burned");
+  whl.bannerTimer = setTimeout(() => {
+    el.classList.add("fade");
+    whl.bannerTimer = setTimeout(() => { el.className = "ures"; el.parentElement.classList.remove("burned", "blessed"); }, 500);
+  }, 2600);
+}
+function finishWhl() {
+  const id = whl.anim ? whl.animId : whl.id, seg = whl.anim ? whl.animSeg : whl.seg, mine = whl.anim ? whl.animBets : whlMine();
+  whl.anim = false; whl.rot %= 360; whl.shownId = id;
+  const mult = WHEEL[seg], staked = mine.reduce((a, b) => a + b.bet, 0);
+  const prize = mine.filter((b) => b.pick === mult).reduce((a, b) => a + b.bet * mult, 0);
+  $("wCenter").textContent = whlLabel(mult);
+  if (!staked) $("wNext").textContent = mult ? `Выпало x${mult}` : "Выпал череп";
+  else if (prize) {
+    showWhlBanner(true, "x" + mult, `+${fmt(prize)}`);
+    $("wNext").textContent = `Колесо остановилось на x${mult}. Выигрыш ${fmt(prize)}`;
+    if (view === "whl") Sfx.play(mult >= 10 ? "big" : "win");
+  } else {
+    showWhlBanner(false, mult ? "x" + mult : "Череп", `−${fmt(staked)}`);
+    $("wNext").textContent = mult ? `Выпало x${mult}, твои ставки мимо` : "Выпал череп. Все ставки сгорели";
+    if (view === "whl") Sfx.play("lose");
+  }
+  // the server pays as its spin ends, a moment after the wheel stops here
+  setTimeout(pollNow, 900);
+  updateHud(); renderWhl();
+}
+bindBet("wBet", "wBetDown", "wBetUp", whl, renderWhl);
+$("wPicks").onclick = (e) => {
+  const b = e.target.closest("button[data-m]");
+  if (!b) return;
+  whl.pick = Number(b.dataset.m); renderWhl();
+};
+$("wGo").onclick = betWhl;
+$("doorWhl").onclick = () => show("whl");
+$("backWhl").onclick = () => show("hub");
+/* ---------- roulette: one pot, one winner ---------- */
+// Players' stakes go into one pot; the circle is split into their arcs, sized by their win chances (the share
+// of the pot, capped at 65% by the server). The second player starts a countdown; then the server draws where
+// the pointer stops and the arc's owner takes the pot: their own stake plus the others' minus a 20% fee.
+const JP_COLORS = ["#a12a2a", "#d8d8d8", "#7a7a7a", "#e3b04b", "#6a3a9a", "#2a7a8a", "#c06a2a", "#4a8a3a", "#b03a7a", "#3a5aa0"];
+const JP_ANIM_MS = 6000;
+const jp = { bet: 100, id: 0, phase: "", betEnds: null, spinMs: 7000, offset: 0, bets: [], pot: 0, winner: null, land: null, prize: 0,
+  hist: [], rot: 0, from: 0, to: 0, t0: 0, dur: 0, anim: false, tick: 0, shownId: 0, bannerTimer: 0, pending: false };
+const jpNow = () => Date.now() + jp.offset;
+const jpOpen = () => jp.phase === "wait" || (jp.phase === "bet" && jpNow() < jp.betEnds);
+const jpMine = () => jp.bets.find((b) => Net.user && b.id === Net.user.id);
+// arcs in the server's bet order: [start, end) as fractions of the circle, clockwise from the top
+function jpArcs(bets) {
+  let a = 0;
+  return bets.map((b, k) => { const s = a; a += b.chance; return { ...b, s, e: a, color: JP_COLORS[k % JP_COLORS.length] }; });
+}
+function drawJpDial(x, size, rot, bets, hi) {
+  const c = size / 2, R = c - 3, toR = (deg) => (deg - 90) * Math.PI / 180;
+  x.clearRect(0, 0, size, size);
+  x.fillStyle = "#151515"; x.beginPath(); x.arc(c, c, c - 1, 0, Math.PI * 2); x.fill();
+  const arcs = jpArcs(bets);
+  if (!arcs.length) { x.fillStyle = "#262626"; x.beginPath(); x.arc(c, c, R, 0, Math.PI * 2); x.fill(); }
+  for (const a of arcs) {
+    x.fillStyle = a.color; x.globalAlpha = hi && a.id !== hi ? 0.35 : 1;
+    x.beginPath(); x.moveTo(c, c); x.arc(c, c, R, toR(a.s * 360 + rot), toR(a.e * 360 + rot)); x.closePath(); x.fill();
+    x.globalAlpha = 1;
+  }
+  x.strokeStyle = "#000"; x.lineWidth = 1;
+  if (arcs.length > 1) for (const a of arcs) { const t = toR(a.s * 360 + rot); x.beginPath(); x.moveTo(c, c); x.lineTo(c + R * Math.cos(t), c + R * Math.sin(t)); x.stroke(); }
+  x.strokeStyle = "#6a6a6a"; x.lineWidth = 2; x.beginPath(); x.arc(c, c, R, 0, Math.PI * 2); x.stroke();
+  const g = x.createRadialGradient(c, c, 2, c, c, R * 0.62);
+  g.addColorStop(0, "#202020"); g.addColorStop(1, "#090909");
+  x.fillStyle = g; x.beginPath(); x.arc(c, c, R * 0.62, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = "#3a3a3a"; x.lineWidth = 2; x.beginPath(); x.arc(c, c, R * 0.62, 0, Math.PI * 2); x.stroke();
+}
+function drawJp() {
+  const x = $("jCanvas").getContext("2d"), c = 80, done = jp.shownId === jp.id && jp.winner !== null;
+  drawJpDial(x, 160, jp.rot, jp.anim ? jp.animBets : jp.bets, done ? jp.winner : 0);
+  x.fillStyle = "#e8e8e8";
+  x.beginPath(); x.moveTo(c, 14); x.lineTo(c - 5, 1); x.lineTo(c + 5, 1); x.closePath(); x.fill();
+  x.fillStyle = "#c01c1c"; x.fillRect(c - 1, 10, 2, 3);
+}
+function jpIcon() {
+  const k = document.createElement("canvas"); k.width = k.height = 28;
+  drawJpDial(k.getContext("2d"), 28, 0, [{ id: 1, chance: 0.5 }, { id: 2, chance: 0.3 }, { id: 3, chance: 0.2 }], 0);
+  return k.toDataURL();
+}
+function jpOnState(m, localAt) {
+  jp.offset = m.now - localAt;
+  if (m.id !== jp.id) {
+    jp.id = m.id;
+    if (!jp.anim) { clearTimeout(jp.bannerTimer); $("jRes").className = "ures"; $("jRes").parentElement.classList.remove("burned", "blessed"); }
+  }
+  Object.assign(jp, { phase: m.phase, betEnds: m.betEnds, spinMs: m.spinMs, bets: m.bets || [], pot: m.pot, winner: m.winner, land: m.land, prize: m.prize, hist: m.hist || [] });
+  if (m.land !== null && jp.shownId !== m.id && !jp.anim) startJpSpin();
+  renderJp();
+}
+function startJpSpin() {
+  const left = jp.betEnds + jp.spinMs - 700 - jpNow(), target = (360 - jp.land * 360) % 360;
+  jp.from = jp.rot % 360;
+  Object.assign(jp, { animId: jp.id, animBets: jp.bets, animWinner: jp.winner, animPrize: jp.prize, animPot: jp.pot });
+  if (left < 400) { jp.rot = target; finishJp(); return; }
+  jp.to = jp.from + 360 * 7 + ((target - jp.from + 360) % 360);
+  Object.assign(jp, { anim: true, t0: performance.now(), dur: Math.min(JP_ANIM_MS, left), tick: 0 });
+  clearTimeout(jp.bannerTimer);
+  $("jRes").className = "ures"; $("jRes").parentElement.classList.remove("burned", "blessed");
+  $("jNext").textContent = "Ставки закрыты. Рулетка крутится…";
+  requestAnimationFrame(jpFrame);
+}
+// whose arc is under the pointer at the top
+function jpUnder(rot, bets) {
+  const f = (((360 - rot) % 360) + 360) % 360 / 360;
+  return jpArcs(bets).find((a) => f >= a.s && f < a.e) || null;
+}
+function jpFrame(now) {
+  if (!jp.anim) return;
+  const p = Math.min(1, (now - jp.t0) / jp.dur), e = 1 - (1 - p) ** 4;
+  jp.rot = jp.from + (jp.to - jp.from) * e;
+  const under = jpUnder(jp.rot, jp.animBets);
+  const tk = under ? under.id : 0;
+  if (tk !== jp.tick) { jp.tick = tk; if (view === "jp") Sfx.play("tick"); }
+  $("jCenter").textContent = under ? under.name.slice(0, 10) : "…";
+  drawJp();
+  if (p >= 1) finishJp(); else requestAnimationFrame(jpFrame);
+}
+function showJpBanner(win, title, sub) {
+  const el = $("jRes");
+  el.innerHTML = `<b>${escapeHtml(title).toUpperCase()}</b><small>${sub}</small>`;
+  el.className = "ures on " + (win ? "win" : "lose");
+  el.parentElement.classList.add(win ? "blessed" : "burned");
+  jp.bannerTimer = setTimeout(() => {
+    el.classList.add("fade");
+    jp.bannerTimer = setTimeout(() => { el.className = "ures"; el.parentElement.classList.remove("burned", "blessed"); }, 500);
+  }, 3000);
+}
+function finishJp() {
+  jp.anim = false; jp.rot %= 360; jp.shownId = jp.animId;
+  const bets = jp.animBets, w = bets.find((b) => b.id === jp.animWinner), me = bets.find((b) => Net.user && b.id === Net.user.id);
+  const name = w ? w.name : "?";
+  if (me && w && w.id === me.id) {
+    showJpBanner(true, "Банк твой", `+${fmt(jp.animPrize)}`);
+    $("jNext").textContent = `Ты забрал банк ${fmt(jp.animPot)}: на счёт ${fmt(jp.animPrize)} (комиссия 20% с выигрыша)`;
+    if (view === "jp") Sfx.play("big");
+  } else if (me) {
+    showJpBanner(false, name, `−${fmt(me.bet)}`);
+    $("jNext").textContent = `Банк забрал ${name}. Твой шанс был ${(me.chance * 100).toFixed(1)}%`;
+    if (view === "jp") Sfx.play("lose");
+  } else $("jNext").textContent = `Банк ${fmt(jp.animPot)} забрал ${name}`;
+  $("jCenter").textContent = name.slice(0, 10);
+  setTimeout(pollNow, 900);       // the server pays as its spin ends, a moment after the pointer stops here
+  updateHud(); renderJp();
+}
+function renderJp() {
+  const open = jpOpen(), me = jpMine(), done = jp.shownId === jp.id && jp.winner !== null;
+  $("jBal").textContent = fmt(Wallet.get());
+  showBet("jBet", jp.bet, false);
+  $("jGo").disabled = !open || jp.pending;
+  $("jGo").textContent = open ? (me ? "Добавить" : "Поставить") : "Ставки закрыты";
+  // only a lone player may take the stake back: once a second one joins, the countdown is on
+  $("jLeave").style.display = me && jp.phase === "wait" ? "" : "none";
+  $("jBetDown").disabled = jp.bet <= BET_MIN;
+  $("jBetUp").disabled = jp.bet >= BET_MAX;
+  if (!jp.anim) {
+    if (jp.phase === "bet" && jpNow() < jp.betEnds) { $("jCenter").textContent = Math.max(0, Math.ceil((jp.betEnds - jpNow()) / 1000)) + ""; $("jSub").textContent = "банк " + fmt(jp.pot); }
+    else if (jp.phase === "wait") { $("jCenter").textContent = fmt(jp.pot); $("jSub").textContent = jp.bets.length ? "ждём второго игрока" : "ставь первым"; }
+    else if (done) { const w = jp.bets.find((b) => b.id === jp.winner); $("jCenter").textContent = w ? w.name.slice(0, 10) : "…"; $("jSub").textContent = "забирает " + fmt(jp.prize); }
+    else if (!jp.phase) { $("jCenter").textContent = "…"; $("jSub").textContent = ""; }
+  }
+  const arcs = jpArcs(jp.anim ? jp.animBets : jp.bets);
+  $("jCount").textContent = arcs.length;
+  $("jTotal").textContent = fmt(arcs.reduce((a, b) => a + b.bet, 0));
+  $("jList").innerHTML = arcs.length ? arcs.map((b) => {
+    const you = Net.user && b.id === Net.user.id, won = done && b.id === jp.winner;
+    const status = won ? `забрал +${fmt(jp.prize)}` : `шанс ${(b.chance * 100).toFixed(1)}%`;
+    return `<div class="prow ${you ? "you" : ""} ${won ? "won" : done ? "lost" : ""}"><span class="pn" style="color:${b.color}">■ ${escapeHtml(b.name)}</span>` +
+      `<span class="pb">${fmt(b.bet)}</span><span class="ps">${status}</span></div>`;
+  }).join("") : `<div class="prow"><span class="ps">Банк пуст</span></div>`;
+  $("jHist").innerHTML = jp.hist.map((n) => `<span>${escapeHtml(n)}</span>`).join("");
+  if (!jp.anim) drawJp();
+}
+async function betJp() {
+  if (!jpOpen() || jp.pending) return;
+  jp.bet = clampBet(jp.bet);
+  const bet = jp.bet;
+  jp.pending = true; renderJp();
+  try {
+    await api("/api/jp/bet", { bet });
+    $("jNext").textContent = `Ставка ${fmt(bet)} в банке. Чем больше ставка, тем больше шанс`;
+    Sfx.play("coin");
+  } catch (e) { $("jNext").textContent = e.message; }
+  jp.pending = false; updateHud(); renderJp(); pollNow();
+}
+async function leaveJp() {
+  try { await api("/api/jp/leave", {}); $("jNext").textContent = "Ставка возвращена"; }
+  catch (e) { $("jNext").textContent = e.message; }
+  updateHud(); pollNow();
+}
+setInterval(() => { if (view === "jp" && !jp.anim) renderJp(); }, 250);
+bindBet("jBet", "jBetDown", "jBetUp", jp, renderJp);
+$("jGo").onclick = betJp;
+$("jLeave").onclick = leaveJp;
+$("doorJp").onclick = () => show("jp");
+
+/* ---------- round history (wheel and roulette) ---------- */
+async function openHistory(title, load, draw) {
+  $("histTitle").textContent = title; $("histSum").innerHTML = ""; $("histList").innerHTML = `<div class="hrow"><span class="hd">Загружаем…</span></div>`;
+  showModal("histModal");
+  try { draw(await api(load, {})); }
+  catch (e) { $("histList").innerHTML = `<div class="hrow"><span class="hd">${escapeHtml(e.message)}</span></div>`; }
+}
+$("wHistBtn").onclick = () => openHistory("История колеса", "/api/wheel/history", ({ rounds }) => {
+  // how often each multiplier fell in these rounds
+  const n = rounds.length, cnt = (m) => rounds.filter((r) => r.mult === m).length;
+  $("histSum").innerHTML = n ? `Последние ${n} раундов:<div class="hsum">` + [0, ...WHEEL_PICKS].map((m) =>
+    `<span style="color:${m ? WHEEL_COLOR[m] : "#7a7a7a"}">${whlLabel(m)} — ${cnt(m)}</span>`).join("") + `</div>` : "";
+  $("histList").innerHTML = n ? rounds.map((r) =>
+    `<div class="hrow"><b style="color:${r.mult ? WHEEL_COLOR[r.mult] : "#7a7a7a"}">${whlLabel(r.mult)}</b>` +
+    `<span class="hd">Раунд ${r.id} · игроков ${r.players} · ставки ${fmt(r.staked)}</span>` +
+    `<span class="hp">${r.paid ? "+" + fmt(r.paid) : "—"}</span></div>`).join("") : `<div class="hrow"><span class="hd">Раундов ещё не было</span></div>`;
+});
+$("jHistBtn").onclick = () => openHistory("История выигрышей", "/api/jp/history", ({ rounds }) => {
+  $("histSum").textContent = rounds.length ? "Кто забрал банк в последних раундах" : "";
+  $("histList").innerHTML = rounds.length ? rounds.map((r) => {
+    const you = Net.user && r.name === Net.user.name;
+    return `<div class="hrow ${you ? "you" : ""}"><b>${(r.chance * 100).toFixed(1)}%</b>` +
+      `<span>${escapeHtml(r.name)}<br><span class="hd">ставка ${fmt(r.bet)} · банк ${fmt(r.pot)} · игроков ${r.players}</span></span>` +
+      `<span class="hp">+${fmt(r.prize)}</span></div>`;
+  }).join("") : `<div class="hrow"><span class="hd">Раундов ещё не было</span></div>`;
+});
+$("backJp").onclick = () => show("hub");
+
+// Payout check: __simulateWheel(pick) -> % returned
+window.__simulateWheel = function (pick = 2, rounds = 500000) {
+  let back = 0;
+  for (let i = 0; i < rounds; i++) if (WHEEL[Math.floor(Math.random() * WHEEL.length)] === pick) back += pick;
+  return (back / rounds * 100).toFixed(2) + "%";
+};
+
 // Payout check: __simulateUpg(mult index) -> % returned
 window.__simulateUpg = function (mi = 2, rounds = 300000) {
   let back = 0;
@@ -3395,6 +3897,8 @@ async function init() {
   $("doorUpgImg").src = SPR.guide;
   buildLootSprites();
   $("doorCofImg").src = SPR.cross;
+  $("doorWhlImg").src = wheelIcon();
+  $("doorJpImg").src = jpIcon();
   buildMinesGrid();
   updateMines();
   $("ptTable").innerHTML = Object.entries(SYMBOLS).filter(([, s]) => s.pays)
