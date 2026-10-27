@@ -1225,12 +1225,20 @@ window.__simulate = function (rounds = 200000) {
 // The direct address first; the relay on Cloudflare Workers only for networks that block *.vercel.app, which
 // keeps the relay's free daily request limit for the players who need it. The first one that answers is used.
 const SERVERS = ["https://nullified-casino-server.vercel.app", "https://nullified-casino.dmitriibyshkov.workers.dev"];
-let SERVER = SERVERS[0];
+// Some providers let the quick check through but stall the real requests, so the page also moves to the
+// other address after two failed requests in a row, and remembers the one that worked for next time.
+let SERVER = SERVERS[0], serverFails = 0;
+try { const s = localStorage.getItem("nullified_server"); if (SERVERS.includes(s)) SERVER = s; } catch {}
+function useServer(s) {
+  SERVER = s; serverFails = 0;
+  try { localStorage.setItem("nullified_server", s); } catch {}
+}
+const nextServer = () => useServer(SERVERS[(SERVERS.indexOf(SERVER) + 1) % SERVERS.length]);
 async function pickServer() {
-  for (const s of SERVERS) {
+  for (const s of [SERVER, ...SERVERS.filter((x) => x !== SERVER)]) {
     try {
       const r = await fetch(s + "/", { signal: AbortSignal.timeout(4000) });
-      if (r.ok) { SERVER = s; return; }
+      if (r.ok) { useServer(s); return; }
     } catch {}
   }
 }
@@ -1259,10 +1267,15 @@ async function api(path, body, { keepBalance = false, retried = false } = {}) {
   if (path !== "/api/poll") Net.seq++;
   if (keepBalance) Net.holdUntil = Date.now() + 15000;
   try {
+    // signing in waits less, so a stalled address is left behind sooner
     r = await fetch(SERVER + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + Net.token },
-      body: JSON.stringify(body || {}), signal: AbortSignal.timeout(15000) });
+      body: JSON.stringify(body || {}), signal: AbortSignal.timeout(path === "/api/login" ? 8000 : 15000) });
     j = await r.json().catch(() => ({}));
-  } catch (e) { throw new Error(e && e.name === "TimeoutError" ? "Сервер игры не отвечает" : "Нет связи с сервером игры"); }
+    serverFails = 0;
+  } catch (e) {
+    if (++serverFails >= 2) nextServer();
+    throw new Error(e && e.name === "TimeoutError" ? "Сервер игры не отвечает" : "Нет связи с сервером игры");
+  }
   if (r.status === 401 && path !== "/api/login" && !retried) { await login(); return api(path, body, { keepBalance, retried: true }); }  // the session ran out
   if (!j.ok) { if (typeof j.balance === "number") Wallet.set(j.balance); const e = new Error(j.error || "Ошибка сервера"); e.data = j; throw e; }
   if (!keepBalance && path !== "/api/poll" && typeof j.balance === "number") Wallet.set(j.balance);
@@ -3913,6 +3926,7 @@ async function init() {
     try { await pickServer(); await login(); break; }
     catch (e) {
       if ($("gate").classList.contains("on")) break;     // not opened from huEVO
+      nextServer();                                        // the next try starts from the other address
       toast(i < 5 ? "Подключаемся к серверу…" : "Не удаётся подключиться к серверу игры: " + e.message + ". Пробуем ещё…", i >= 5);
       await sleep(i < 5 ? 3000 : 8000);
     }
