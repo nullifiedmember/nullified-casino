@@ -1198,7 +1198,7 @@ async function login() {
 function pollDelay() {
   // free hosting counts every request, so polls are spaced out wherever nothing is moving
   if (document.hidden) return 60000;
-  if (view === "crash") return crash.phase === "fly" ? 500 : 1500;
+  if (view === "crash") return crash.phase === "fly" ? 250 : 1500;
   if (view === "duel") return duel.phase === "wait" ? 1000 : 5000;
   return 20000;
 }
@@ -2296,7 +2296,10 @@ bindBet("bjBet", "bjBetDown", "bjBetUp", bj, renderBJ);
 /* ---------- crash ---------- */
 // A bat climbs while the multiplier grows as e^(k·t) and drops at a random crash point.
 // P(point >= x) = 0.85 / x, so every cash-out strategy returns ~85%.
-const CRASH_EDGE = 0.85, CRASH_K = 0.14, CRASH_VIEW_DELAY = 700;
+// CRASH_GRACE_MS matches the server: a "fly" answer at server time t means the bat was still alive at t - grace.
+// The picture runs CRASH_VIEW_DELAY behind the server (grace + one fast poll + the network), so the crash point
+// normally arrives before the picture gets there.
+const CRASH_EDGE = 0.85, CRASH_K = 0.14, CRASH_GRACE_MS = 300, CRASH_VIEW_DELAY = 1100;
 const CRASH_AUTO = [0, 1.2, 1.5, 2, 3, 5, 10, 25, 100];
 const CW = 192, CH = 108;
 const BAT = {
@@ -2305,16 +2308,27 @@ const BAT = {
 };
 const CRASH_BET_SEC = 6;
 const crash = { bet: 40, auto: 0, phase: "bet", roundId: 0, sec: 0, point: 1, m: 1, el: 0, fallAt: 0, hist: [], players: [],
-  queued: false, offset: 0, betEnds: 0, flyStart: 0 };
+  queued: false, offset: 0, betEnds: 0, flyStart: 0, alive: 0 };   // alive: server time the bat is confirmed alive at
 
 /* Shared rounds run on the game server: it draws each crash point in secret and reveals it only when
    the bat falls, takes the bets and pays the cash-outs. The page times the flight from the server clock. */
 const myCrash = () => crash.players.find((p) => p.you);
-function crashOnState(m, localAt) {
-  crash.offset = m.now - (localAt || Date.now());
+function crashOnState(m, localAt, force) {
+  localAt = localAt || Date.now();
+  // a held crash is shown before anything that comes after it
+  if (crash.held && !force && (m.id !== crash.roundId || m.phase !== "crashed")) { const h = crash.held; crash.held = null; crashOnState(h.m, h.localAt, true); }
+  // the crash is usually revealed before the delayed picture gets there: the bat flies on up to the
+  // crash point and only then falls
+  if (!force && m.phase === "crashed" && m.point && m.id === crash.roundId && crash.phase !== "crashed") {
+    const at = m.flyStart + Math.log(m.point) / CRASH_K * 1000;
+    if (m.now - CRASH_VIEW_DELAY < at) { crash.held = { m, localAt, at }; crash.offset = m.now - localAt; crash.alive = at; return; }
+  }
+  crash.offset = m.now - localAt;
   const prev = crash.phase, newRound = m.id !== crash.roundId, meBefore = myCrash();
   Object.assign(crash, { roundId: m.id, phase: m.phase, betEnds: m.betEnds, flyStart: m.flyStart, hist: m.hist || [], queued: !!m.queued });
   if (m.point) crash.point = m.point;
+  if (newRound) crash.alive = 0;
+  if (m.phase === "fly") crash.alive = Math.max(crash.alive, m.now - CRASH_GRACE_MS);
   crash.players = (m.players || []).map((p) => ({ ...p, you: !!Net.user && p.id === Net.user.id }));
   // a cash-out this page just made is not undone by a poll that left before it
   if (meBefore && meBefore.cashed && myCrash() && !myCrash().cashed && !newRound) myCrash().cashed = meBefore.cashed;
@@ -2498,15 +2512,20 @@ function crashLaunchSound() {
 // Local clock for the animation, corrected by the server's clock offset.
 function crashTick() {
   const now = Date.now() + crash.offset;
+  if (crash.held && now - CRASH_VIEW_DELAY >= crash.held.at) { const h = crash.held; crash.held = null; crashOnState(h.m, h.localAt, true); }
   // the bets close on the clock; the next poll confirms the flight
   if (crash.phase === "bet" && crash.betEnds && now >= crash.betEnds) {
     crash.phase = "fly";
     crashLaunchSound();
   }
   if (crash.phase === "bet") { crash.el = CRASH_BET_SEC - (crash.betEnds - now) / 1000; crash.sec = 0; crash.m = 1; }
-  // the flight is shown CRASH_VIEW_DELAY behind the server: the crash point arrives (after the server's grace)
-  // about when the picture gets there, and "Забрать" pays the multiplier shown on the screen
-  else if (crash.phase === "fly") { crash.sec = Math.max(0, (now - CRASH_VIEW_DELAY - crash.flyStart) / 1000); crash.m = crashMult(crash.sec); }
+  // the flight is shown CRASH_VIEW_DELAY behind the server and never past the moment the server has confirmed
+  // the bat alive: on a slow network it hovers for a moment instead of flying on past the crash point.
+  // "Забрать" pays the multiplier shown on the screen
+  else if (crash.phase === "fly") {
+    const t = Math.min(now - CRASH_VIEW_DELAY, Math.max(crash.alive, crash.flyStart));
+    crash.sec = Math.max(0, (t - crash.flyStart) / 1000); crash.m = crashMult(crash.sec);
+  }
   else { crash.sec = Math.log(crash.point) / CRASH_K; crash.m = crash.point; }
 }
 function crashFrame(now) {
