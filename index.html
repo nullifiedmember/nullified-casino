@@ -800,7 +800,7 @@
 
 <div class="duel view" id="duel">
   <div class="hall">
-    <div class="hall-head">Залы дуэлей <span>50 на 50 · комиссия 15%</span></div>
+    <div class="hall-head">Залы дуэлей <span>50 на 50 · комиссия 6,5%</span></div>
     <div class="rooms" id="duelRooms"></div>
   </div>
   <div class="arena">
@@ -893,7 +893,7 @@
     </div>
     <button class="go" id="jGo">Поставить</button>
     <button class="back" id="jLeave">Забрать ставку</button>
-    <div class="next" id="jNext">Ставки идут в общий банк, забирает его один. Шанс = твоя доля банка, но не больше 65%. Комиссия 20% с выигрыша</div>
+    <div class="next" id="jNext">Ставки идут в общий банк, забирает его один. Шанс = твоя доля банка, но не больше 65%. Комиссия 12% с выигрыша</div>
     <div class="dhist" id="jHist"></div>
     <button class="back" id="jHistBtn">История выигрышей</button>
     <button class="back" id="backJp">← В собор</button>
@@ -1297,6 +1297,12 @@ async function login() {
   $("who").textContent = j.user.name;
   document.querySelector(".test").textContent = Net.test ? "ТЕСТОВЫЙ РЕЖИМ huEVO" : "МОНЭТКИ huEVO";
   takeWins(j.wins);
+  // free spins waiting on the server (the gift, or a round of them cut short by a reload)
+  if (j.slots && j.slots.fsLeft > 0) {
+    Object.assign(state, { fsLeft: j.slots.fsLeft, fsWin: j.slots.fsWin || 0, bet: j.slots.bet || state.bet });
+    updateHud();
+  }
+  if (j.gift) toast(`Подарок: ${j.gift} фриспинов в слотах! Заходи в Slots`, false);
   Net.live = true;
   pollLoop();
   return j;
@@ -2166,7 +2172,7 @@ $("withdrawBtn").onclick = () => openCash("withdraw");
 // 25 slabs, N of them hide a bloody sword. Each safe slab raises the multiplier;
 // the fair multiplier for k safe picks is prod (25-i)/(25-N-i), minus a 15% house edge.
 const MINE_TILES = 25;
-const MINE_EDGE = 0.85;
+const MINE_EDGE = 0.935;
 const mines = { bet: 40, count: 3, active: false, knives: new Set(), opened: new Set(), boom: -1, revealed: false };
 
 function minesMultiplier(picks, count) {
@@ -2416,7 +2422,7 @@ bindBet("bjBet", "bjBetDown", "bjBetUp", bj, renderBJ);
 // CRASH_GRACE_MS matches the server: a "fly" answer at server time t means the bat was still alive at t - grace.
 // The picture runs CRASH_VIEW_DELAY behind the server (grace + one fast poll + the network), so the crash point
 // normally arrives before the picture gets there.
-const CRASH_EDGE = 0.85, CRASH_K = 0.14, CRASH_GRACE_MS = 300, CRASH_VIEW_DELAY = 1100;
+const CRASH_EDGE = 0.935, CRASH_K = 0.14, CRASH_GRACE_MS = 300, CRASH_VIEW_DELAY = 1100;
 const CRASH_AUTO = [0, 1.2, 1.5, 2, 3, 5, 10, 25, 100];
 const CW = 192, CH = 108;
 const BAT = {
@@ -2684,7 +2690,7 @@ $("backCrash").onclick = () => show("hub");
 // The survivor takes the pot of both stakes minus a 15% fee. Rooms, matching and the draw are on the
 // server: a player waits in a stake room until someone else walks in.
 const DUEL_STAKES = [100, 500, 1000, 5000, 25000, 95000];
-const DUEL_FEE = 0.15;
+const DUEL_FEE = 0.065;
 const DUEL_WALK = 2.8, DUEL_BITE = 3.9, DUEL_END = 4.6;      // scene timeline, seconds
 const duel = { rooms: DUEL_STAKES.map((stake) => ({ stake, waiting: null, waitingId: null })), phase: "hall", stake: 0, opp: "",
   youDie: false, prize: 0, t0: 0, resolved: false, hist: [], raf: 0 };
@@ -2882,7 +2888,7 @@ function duelFrame(now) {
 // Stake a sum and aim for x times more. Win chance = 0.65 / multiplier, drawn as the red arc on the dial.
 // The blade stops at a uniformly random angle, so the arc's share of the circle is exactly the chance.
 const UPG_MULTS = [1.2, 1.5, 2, 3, 5, 10, 20, 50, 100];
-const UPG_EDGE = 0.65, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
+const UPG_EDGE = 0.715, UPG_MIN = BET_MIN, UPG_MAX = BET_MAX;
 const UPG_SPIN_MS = 3400;
 const upg = { bet: 100, mult: 2, phase: "idle", from: 0, to: 0, t0: 0, angle: 180, tick: 0, res: null, hist: [], bannerTimer: 0 };
 const upgChance = () => UPG_EDGE / UPG_MULTS[upg.mult];
@@ -3011,17 +3017,18 @@ $("uGo").onclick = spinUpg;
 $("doorUpg").onclick = () => show("upg");
 $("backUpg").onclick = () => show("hub");
 /* ---------- wheel of fortune ---------- */
-// 50 sectors: 20 × x2, 8 × x5, 4 × x10, 2 × x20, 16 skulls. Shared rounds, like Crash: everyone bets on one or
+// 250 sectors: 110 × x2, 44 × x5, 22 × x10, 11 × x20, 63 skulls. Shared rounds, like Crash: everyone bets on one or
 // more multipliers while the round takes bets, then one spin decides for all and a hit pays bet × the pick.
-// Chance = count / 50, so every pick returns 80% on average. The server draws the sector in secret and
+// Chance = count / 250, so every pick returns 88% on average. The server draws the sector in secret and
 // reveals it when the bets close; the page only turns the wheel to it. The layout must match WHEEL on the server.
 const WHEEL_PICKS = [2, 5, 10, 20];
 const WHEEL_COLOR = { 0: "#0b0b0b", 2: "#7a7a7a", 5: "#a12a2a", 10: "#d8d8d8", 20: "#e3b04b" };
 const WHEEL = (() => {
-  const w = new Array(50).fill(0), place = (mult, every, from) => { for (let i = from; i < 50; i += every) w[i] = mult; };
-  place(2, 5, 0); place(2, 5, 2); place(5, 25, 1); place(5, 25, 6); place(5, 25, 11); place(5, 25, 16);
-  place(10, 25, 3); place(10, 25, 13); place(20, 25, 21);
-  return w;
+  // the rarer multipliers are spread evenly first, the rest fill the next free sectors, skulls take what is left
+  const N = 250, w = new Array(N).fill(-1);
+  for (const [m, n] of [[20, 11], [10, 22], [5, 44], [2, 110]])
+    for (let k = 0; k < n; k++) { let i = Math.floor((k + 0.5) * N / n); while (w[i % N] !== -1) i++; w[i % N] = m; }
+  return w.map((v) => (v === -1 ? 0 : v));
 })();
 const WSEG = 360 / WHEEL.length, WHEEL_ANIM_MS = 5200;
 // shownId: the round whose result this page has already played out; offset: server clock - ours
@@ -3038,7 +3045,7 @@ function drawWheel(x, size, rot, pick) {
   WHEEL.forEach((m, i) => {
     const a0 = i * WSEG + rot, a1 = a0 + WSEG;
     x.fillStyle = WHEEL_COLOR[m];
-    x.globalAlpha = pick && m !== pick && m !== 0 ? 0.45 : 1;
+    x.globalAlpha = pick && m !== pick && m !== 0 ? 0.6 : 1;
     x.beginPath(); x.moveTo(c, c); x.arc(c, c, R, toR(a0), toR(a1)); x.closePath(); x.fill();
     x.globalAlpha = 1;
     // a bone-white dot on each sector of the picked multiplier
@@ -3047,9 +3054,9 @@ function drawWheel(x, size, rot, pick) {
       x.fillStyle = `rgba(255,255,255,${glow})`; x.fillRect(Math.round(c + r * Math.cos(am)) - 1, Math.round(c + r * Math.sin(am)) - 1, 2, 2);
     }
   });
-  // thin black spokes between sectors
+  // thin black spokes where the multiplier changes; a wheel this fine reads better without them
   x.strokeStyle = "#000"; x.lineWidth = 1;
-  for (let i = 0; i < WHEEL.length; i++) { const a = toR(i * WSEG + rot); x.beginPath(); x.moveTo(c + 22 * Math.cos(a), c + 22 * Math.sin(a)); x.lineTo(c + R * Math.cos(a), c + R * Math.sin(a)); x.stroke(); }
+  if (WHEEL.length <= 60) for (let i = 0; i < WHEEL.length; i++) { if (WHEEL[i] === WHEEL[(i + WHEEL.length - 1) % WHEEL.length]) continue; const a = toR(i * WSEG + rot); x.beginPath(); x.moveTo(c + 22 * Math.cos(a), c + 22 * Math.sin(a)); x.lineTo(c + R * Math.cos(a), c + R * Math.sin(a)); x.stroke(); }
   x.strokeStyle = "#6a6a6a"; x.lineWidth = 2; x.beginPath(); x.arc(c, c, R, 0, Math.PI * 2); x.stroke();
   // hub
   const g = x.createRadialGradient(c, c, 2, c, c, R * 0.62);
@@ -3132,7 +3139,7 @@ function renderWhl() {
   // each button shows what everyone has put on that multiplier this round
   const on = (m) => whl.bets.filter((b) => b.pick === m).reduce((a, b) => a + b.bet, 0);
   $("wPicks").innerHTML = WHEEL_PICKS.map((m) =>
-    `<button data-m="${m}" class="${m === whl.pick ? "on" : ""}" style="--wc:${WHEEL_COLOR[m]}">x${m}<small>${on(m) ? fmt(on(m)) : wheelCount(m) * 2 + "%"}</small></button>`).join("");
+    `<button data-m="${m}" class="${m === whl.pick ? "on" : ""}" style="--wc:${WHEEL_COLOR[m]}">x${m}<small>${on(m) ? fmt(on(m)) : +(wheelCount(m) / WHEEL.length * 100).toFixed(1) + "%"}</small></button>`).join("");
   $("wGo").disabled = !open || whl.pending;
   $("wGo").textContent = open ? "Поставить" : "Ставки закрыты";
   $("wBetDown").disabled = whl.bet <= BET_MIN;
@@ -3311,7 +3318,7 @@ function finishJp() {
   const name = w ? w.name : "?";
   if (me && w && w.id === me.id) {
     showJpBanner(true, "Банк твой", `+${fmt(jp.animPrize)}`);
-    $("jNext").textContent = `Ты забрал банк ${fmt(jp.animPot)}: на счёт ${fmt(jp.animPrize)} (комиссия 20% с выигрыша)`;
+    $("jNext").textContent = `Ты забрал банк ${fmt(jp.animPot)}: на счёт ${fmt(jp.animPrize)} (комиссия 12% с выигрыша)`;
     if (view === "jp") Sfx.play("big");
   } else if (me) {
     showJpBanner(false, name, `−${fmt(me.bet)}`);
@@ -3449,7 +3456,7 @@ const CASE_ITEMS = [
 ];
 const CASE_LOOT = CASE_ITEMS.map((items) => items.map(([name, icon], i) => ({ ...LOOT[i], name, icon })));
 const LOOT_W = LOOT.reduce((a, l) => a + l.w, 0);
-const LOOT_K = 0.75 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
+const LOOT_K = 0.825 / (LOOT.reduce((a, l) => a + l.m * l.w, 0) / LOOT_W);
 const COFFINS = [
   { name: "Простой кейс", price: 10, w1: "#3a3a3a", w2: "#5e5e5e", cross: "#a0a0a0" },
   { name: "Обычный кейс", price: 50, w1: "#262626", w2: "#474747", cross: "#cfcfcf" },
