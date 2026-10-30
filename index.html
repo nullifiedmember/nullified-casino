@@ -1267,9 +1267,10 @@ async function api(path, body, { keepBalance = false, retried = false } = {}) {
   if (path !== "/api/poll") Net.seq++;
   if (keepBalance) Net.holdUntil = Date.now() + 15000;
   try {
-    // signing in waits less, so a stalled address is left behind sooner
+    // a slow mobile network needs the full wait even for signing in: cutting it short sent such players
+    // back and forth between the two addresses without ever getting in
     r = await fetch(SERVER + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + Net.token },
-      body: JSON.stringify(body || {}), signal: AbortSignal.timeout(path === "/api/login" ? 8000 : 15000) });
+      body: JSON.stringify(body || {}), signal: AbortSignal.timeout(20000) });
     j = await r.json().catch(() => ({}));
     serverFails = 0;
   } catch (e) {
@@ -2138,7 +2139,7 @@ $("cashOk").onclick = async () => {
   if (!amount) return;
   // every step says what is going on, so a slow network never looks like a dead button
   const step = (text) => { $("cashText").innerHTML = text; };
-  if (!Net.token) { toast("Игра ещё не подключилась к серверу. Подожди немного или обнови страницу", true); return; }
+  if (!Net.token) { toast("Игра ещё не подключилась к серверу" + (Net.lastErr ? " (" + Net.lastErr + ")" : "") + ". Подожди немного или обнови страницу", true); return; }
   $("cashOk").disabled = true;
   try {
     if (cashMode === "withdraw") {
@@ -3934,6 +3935,7 @@ async function init() {
     catch (e) {
       if ($("gate").classList.contains("on")) break;     // not opened from huEVO
       nextServer();                                        // the next try starts from the other address
+      Net.lastErr = e.message;
       toast(i < 5 ? "Подключаемся к серверу…" : "Не удаётся подключиться к серверу игры: " + e.message + ". Пробуем ещё…", i >= 5);
       await sleep(i < 5 ? 3000 : 8000);
     }
