@@ -274,7 +274,23 @@
   .cplay { display: flex; gap: 10px; }
   /* site-wide wins ticker across the top, visible in every game */
   body { padding-top: 48px; }
-  .ticker { position: fixed; top: 0; left: 0; right: 0; z-index: 21; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 74px 0 10px;
+  /* leaderboard: a button by the sound one, the board drops down under it */
+  .topbtn { position: fixed; right: 62px; top: 4px; z-index: 22; height: 36px; padding: 0 10px; font-family: "Press Start 2P", monospace; font-size: 10px;
+    color: #e3b04b; background: linear-gradient(#2a2a2a, #0c0c0c); border: 1px solid #4a4a4a; cursor: pointer; }
+  .topbtn:hover, .topbtn.open { border-color: #e3b04b; box-shadow: 0 0 10px rgba(227,176,75,.4); }
+  .lead { position: fixed; right: 8px; top: 50px; z-index: 20; width: 250px; display: none; font-family: "Press Start 2P", monospace; font-size: 9px;
+    background: rgba(10,10,10,.92); border: 1px solid #4a4a4a; box-shadow: 0 0 0 4px rgba(0,0,0,.6); }
+  .lead.on { display: block; }
+  .lhead { padding: 8px 10px; color: #e3b04b; border-bottom: 1px solid #333; }
+  .lrow { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 6px; padding: 6px 10px; border-bottom: 1px solid #1f1f1f; color: #cfcfcf; line-height: 1.5; }
+  .lrow:last-child { border-bottom: 0; }
+  .lrow .lp { color: #7a7a7a; }
+  .lrow .ln { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lrow .lt { color: #fff; text-align: right; }
+  .lrow.p1 .lp, .lrow.p1 .lt { color: #e3b04b; }
+  .lrow.p2 .lp, .lrow.p3 .lp { color: #bdbdbd; }
+  .lrow.you { background: rgba(160,40,40,.18); }
+  .ticker { position: fixed; top: 0; left: 0; right: 0; z-index: 21; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 140px 0 10px;
     overflow: hidden; background: linear-gradient(#202020, #0c0c0c); border-bottom: 1px solid var(--edge); box-shadow: 0 2px 12px rgba(0,0,0,.7); }
   .ticker .wl, .ticker span { font-family: "Press Start 2P", monospace; font-size: 9px; white-space: nowrap; }
   .ticker .wl { color: #9a9a9a; flex: none; }
@@ -592,6 +608,11 @@
 <div class="test">ТЕСТОВЫЙ БАЛАНС</div>
 <div class="ticker"><span class="wl">Выигрыши</span><div class="wtrack" id="ticker"></div></div>
 <button class="snd" id="sound" title="Громкость музыки и звуков" aria-label="Громкость"><img id="soundImg" alt=""></button>
+<button class="topbtn" id="topBtn" title="Таблица лидеров">Топ</button>
+<div class="lead" id="lead">
+  <div class="lhead">Топ-10 по пополнениям</div>
+  <div id="leadList"><div class="lrow"><span class="ln">Загружаем…</span></div></div>
+</div>
 <div class="volpanel" id="volpanel">
   <label>Музыка <span id="volMusicVal"></span><input type="range" id="volMusic" min="0" max="100" step="1"></label>
   <label>Звуки <span id="volSfxVal"></span><input type="range" id="volSfx" min="0" max="100" step="1"></label>
@@ -1304,6 +1325,7 @@ async function login() {
     updateHud();
   }
   if (j.gift) toast(`Подарок: ${j.gift} фриспинов в слотах! Заходи в Slots`, false);
+  renderLead();
   Net.live = true;
   pollLoop();
   return j;
@@ -2070,6 +2092,7 @@ function show(next) {
   pollNow();
   for (const id of ["hub", "slots", "mines", "bj", "crash", "duel", "upg", "whl", "jp", "cof"]) $(id).classList.toggle("on", id === next);
   if (next === "jp") renderJp();
+  renderLead();
   if (next === "duel") renderRooms();
   if (next === "upg") renderUpg();
   if (next === "whl") renderWhl();
@@ -3380,6 +3403,30 @@ bindBet("jBet", "jBetDown", "jBetUp", jp, renderJp);
 $("jGo").onclick = betJp;
 $("jLeave").onclick = leaveJp;
 $("doorJp").onclick = () => show("jp");
+
+/* ---------- leaderboard: top 10 by top-ups ---------- */
+// Open by itself in the cathedral on a wide screen, behind the "Топ" button everywhere else; once the player
+// presses the button, their choice holds. The server keeps the list for a minute, the page asks at most as often.
+const lead = { open: null, at: 0 };
+const leadShown = () => (lead.open !== null ? lead.open : view === "hub" && innerWidth >= 900);
+function renderLead() {
+  const on = leadShown();
+  $("lead").classList.toggle("on", on);
+  $("topBtn").classList.toggle("open", on);
+  if (on && Net.token && Date.now() - lead.at > 60000) loadLead();
+}
+async function loadLead() {
+  lead.at = Date.now();
+  try {
+    const { top } = await api("/api/top", {});
+    $("leadList").innerHTML = top.length ? top.map((p, i) => {
+      const you = Net.user && p.id === Net.user.id;
+      return `<div class="lrow p${i + 1} ${you ? "you" : ""}"><span class="lp">${i + 1}.</span><span class="ln">${escapeHtml(p.name)}</span><span class="lt">${fmt(p.total)}</span></div>`;
+    }).join("") : `<div class="lrow"><span class="ln">Пока никто не пополнял</span></div>`;
+  } catch { lead.at = 0; }
+}
+$("topBtn").onclick = () => { lead.open = !leadShown(); renderLead(); };
+addEventListener("resize", () => { if (lead.open === null) renderLead(); });
 
 /* ---------- round history (wheel and roulette) ---------- */
 async function openHistory(title, load, draw) {
